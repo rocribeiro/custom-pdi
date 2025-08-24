@@ -1,343 +1,172 @@
-// Dados do PDI
+const PALETA_DE_CORES = [
+    '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6',
+    '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#ec4899', '#78716c'
+];
+
 class PDI {
     constructor() {
         this.tipoVisualizacao = 'semestre';
-        this.draggedElement = null;
-        this.proximoId = 7;
-
+        this.proximoId = 100;
+        this.itemParaExcluir = null;
+        this.itemEmEdicao = null;
+        this.acaoEmEdicaoId = null;
+        this.categoriaEmEdicao = null;
         this.acoes = [];
-        this.acoesPorPeriodo = {};
         this.pontosFortes = [];
+        this.pontosDeMelhoria = [];
         this.metricas = [];
-
-        // Carrega dados do localStorage ou usa dados iniciais
-        this.carregarPDI(true); // true para carregamento silencioso na inicialização
-    }
-
-    init() {
+        this.config = {};
+        this.carregarPDI(true);
+        this.criarModaisDinamicos();
         this.setupEventListeners();
-        this.renderizarTudo();
     }
 
-    renderizarTudo() {
-        document.getElementById('tipoVisualizacao').value = this.tipoVisualizacao;
-        this.renderizarPontosFortes();
-        this.renderizarMetricas();
-        this.gerarPeriodos();
-    }
+    init() { this.renderizarTudo(); }
+    renderizarTudo() { this.aplicarConfiguracoes(); this.renderizarComponentesEstaticos(); this.renderizarTimeline(); }
 
     dadosIniciais() {
-        this.tipoVisualizacao = 'semestre';
-        this.proximoId = 7;
+        this.proximoId = 100;
+        const anoAtual = new Date().getFullYear();
         this.acoes = [
-            { id: 1, titulo: "🔧 Aprofundamento Backend", descricao: "Estudar arquiteturas distribuídas, microserviços e padrões de design (Strategy, Observer, Command)", categoria: "tecnico", prioridade: "alta" },
-            { id: 2, titulo: "📊 1x1 com Coordenador de Produtos", descricao: "Reuniões quinzenais para entender métricas de produto, roadmap e estratégia de negócio", categoria: "produto", prioridade: "alta" },
-            { id: 3, titulo: "☁️ AWS Solutions Architect", descricao: "Iniciar estudos para certificação AWS focando em arquitetura de soluções", categoria: "certificacao", prioridade: "media" },
-            { id: 4, titulo: "👥 Mentoria de Juniors", descricao: "Assumir mentoria de 1-2 desenvolvedores juniors para desenvolver habilidades de liderança", categoria: "lideranca", prioridade: "media" },
-            { id: 5, titulo: "🎯 Iniciar Processo de Entrevistas", descricao: "Começar aplicações para posições de coordenação técnica", categoria: "lideranca", prioridade: "meta" },
-            { id: 6, titulo: "🏗️ Liderar Projeto de Arquitetura", descricao: "Propor e liderar refatoração de sistema legado aplicando novos conhecimentos", categoria: "tecnico", prioridade: "alta" }
+            { id: 1, titulo: "Fazer um MBA", descricao: "Pesquisar e iniciar um MBA.", categoria: "lideranca", dataInicio: `${anoAtual-1}-08`, dataFim: `${anoAtual}-11` },
+            { id: 2, titulo: "Virar Tech Lead", descricao: "Desenvolver competências.", categoria: "lideranca", dataInicio: `${anoAtual}-01`, dataFim: `${anoAtual+1}-06` },
         ];
-        this.acoesPorPeriodo = {
-            'semestre': { '2026/1': [1, 2, 3, 4], '2026/2': [5, 6], '2027/1': [] },
-            'trimestre': { '2026/1T': [1, 2], '2026/2T': [3, 4], '2026/3T': [5], '2026/4T': [6], '2027/1T': [], '2027/2T': [] }
+        this.pontosFortes = [{ titulo: "🗣️ Comunicação", descricao: "Articulação e alinhamento." }];
+        this.pontosDeMelhoria = [];
+        this.metricas = [{ titulo: '📚 Conhecimento Técnico', descricao: '• Concluir 2 cursos por semestre' }];
+        this.config = {
+            anosVisiveis: 3,
+            cores: { tecnico: PALETA_DE_CORES[7], produto: PALETA_DE_CORES[8], lideranca: PALETA_DE_CORES[0], certificacao: PALETA_DE_CORES[1] }
         };
-        this.pontosFortes = [
-            { titulo: "🗣️ Comunicação", descricao: "Habilidade consolidada para articulação e alinhamento entre equipes" },
-            { titulo: "⚡ Tomada de Decisões", descricao: "Capacidade analítica e agilidade em decisões estratégicas" },
-            { titulo: "🤝 Proximidade com Produtos", descricao: "Relacionamento estabelecido e entendimento do negócio" }
-        ];
-        this.metricas = [
-            { titulo: '📚 Conhecimento Técnico', descricao: '• Concluir 2 cursos avançados de backend por semestre\n• Contribuir com 1 artigo técnico trimestral\n• Apresentar 1 tech talk por semestre' },
-            { titulo: '🎯 Conhecimento de Produto', descricao: '• Participar de 100% das demos de produto\n• Criar 2 análises de impacto técnico-produto por mês\n• Mapear 3 principais métricas de cada squad' },
-            { titulo: '👑 Liderança', descricao: '• Feedback positivo de mentorados (>4.0/5.0)\n• Liderar 2 projetos cross-funcionais\n• Obter feedback 360° trimestral' },
-            { titulo: '🏆 Certificações', descricao: '• AWS Solutions Architect até Dezembro/2026\n• Avaliar necessidade de certificações adicionais\n• Manter conhecimentos atualizados' }
-        ];
     }
+
+    aplicarConfiguracoes() { Object.entries(this.config.cores).forEach(([cat, cor]) => document.documentElement.style.setProperty(`--cat-${cat}`, cor)); if (document.getElementById('selectAnosVisiveis')) { document.getElementById('selectAnosVisiveis').value = this.config.anosVisiveis; } }
 
     setupEventListeners() {
-        document.getElementById('tipoVisualizacao').addEventListener('change', (e) => { this.tipoVisualizacao = e.target.value; this.gerarPeriodos(); });
-        document.getElementById('btnAddPontoForte').addEventListener('click', () => this.abrirModal('modalPontoForte'));
-        document.getElementById('btnAddAcao').addEventListener('click', () => this.abrirModal('modalAcao'));
-        document.getElementById('btnAddMetrica').addEventListener('click', () => this.abrirModal('modalMetrica'));
-        document.getElementById('btnSalvarPDI').addEventListener('click', () => this.salvarPDI());
-        document.getElementById('btnCarregarPDI').addEventListener('click', () => this.carregarPDI());
-
-        document.getElementById('addPontoForte').addEventListener('click', () => this.adicionarPontoForte());
-        document.getElementById('cancelPontoForte').addEventListener('click', () => this.fecharModal('modalPontoForte'));
-
-        document.getElementById('addAcao').addEventListener('click', () => this.adicionarAcao());
-        document.getElementById('cancelAcao').addEventListener('click', () => this.fecharModal('modalAcao'));
-
-        document.getElementById('addMetrica').addEventListener('click', () => this.adicionarMetrica());
-        document.getElementById('cancelMetrica').addEventListener('click', () => this.fecharModal('modalMetrica'));
-
-        window.addEventListener('click', (event) => {
-            if (event.target.classList.contains('modal')) {
-                this.fecharModal(event.target.id);
-            }
-        });
-
-        document.addEventListener('dragend', () => {
-            document.querySelectorAll('.drop-zone').forEach(zone => zone.classList.remove('drag-over', 'limite-atingido'));
-            if (this.draggedElement) {
-                this.draggedElement.classList.remove('dragging');
-                this.draggedElement = null;
-            }
+        document.getElementById('tipoVisualizacao').addEventListener('change', e => { this.tipoVisualizacao = e.target.value; this.renderizarTimeline(); this.autosave(); });
+        document.getElementById('selectAnosVisiveis').addEventListener('change', e => { this.config.anosVisiveis = parseInt(e.target.value); this.renderizarTimeline(); this.autosave(); });
+        document.getElementById('btnExportarPDI').addEventListener('click', () => this.exportarPDI());
+        const fileUploader = document.getElementById('fileUploader');
+        document.getElementById('btnCarregarPDI').addEventListener('click', () => fileUploader.click());
+        fileUploader.addEventListener('change', e => this.carregarArquivo(e));
+        document.getElementById('colorPalettePopup').addEventListener('click', e => { if (e.target.classList.contains('palette-color')) this.selecionarCor(e.target.dataset.color); });
+        window.addEventListener('click', e => { const popup = document.getElementById('colorPalettePopup'); if (popup && !popup.contains(e.target) && !e.target.classList.contains('legenda-cor')) { this.fecharPaletaDeCores(); } });
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.addEventListener('click', e => {
+            if (e.target.matches('.btn-cancel') || e.target.matches('.modal')) { const modal = e.target.closest('.modal'); if (modal) this.fecharModal(modal.id); }
+            if (e.target.id === 'confirmExclusaoItem') this.confirmarExclusaoItem();
+            if (e.target.id === 'saveAcaoBtn') this.salvarAcao();
+            if (e.target.id === 'saveItemBtn') this.salvarItem();
         });
     }
 
-    // --- RENDER METHODS --- //
+    renderizarComponentesEstaticos() { this.renderizarPontosFortes(); this.renderizarPontosDeMelhoria(); this.renderizarMetricas(); this.renderizarLegenda(); }
 
-    renderizarPontosFortes() {
-        const container = document.getElementById('pontosFortesContainer');
-        container.innerHTML = this.pontosFortes.map((pf, index) => `
-            <div class="ponto-forte">
-                <button class="btn-delete" data-index="${index}" data-type="ponto-forte">×</button>
-                <h4>${pf.titulo}</h4>
-                <p>${pf.descricao}</p>
-            </div>
-        `).join('');
-        container.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', (e) => this.removerItem(e, 'ponto-forte')));
+    adicionarBotaoContextual(secaoId, callback) {
+        const header = document.querySelector(`${secaoId} h3`);
+        if (!header) return;
+        header.querySelector('.btn-add-contextual')?.remove();
+        const button = document.createElement('button');
+        button.className = 'btn-add-contextual';
+        button.innerHTML = '+';
+        button.addEventListener('click', callback);
+        header.appendChild(button);
     }
 
-    renderizarMetricas() {
-        const container = document.getElementById('metricasContainer');
-        container.innerHTML = this.metricas.map((metrica, index) => `
-            <div class="metrica-item">
-                <button class="btn-delete" data-index="${index}" data-type="metrica">×</button>
-                <h5>${metrica.titulo}</h5>
-                <p>${metrica.descricao}</p>
-            </div>
-        `).join('');
-        container.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', (e) => this.removerItem(e, 'metrica')));
-    }
+    renderizarLegenda() { const container = document.getElementById('legendaContainer'); container.innerHTML = Object.keys(this.config.cores).map(key => `<div class="legenda-item"><div class="legenda-cor" style="background: var(--cat-${key});" data-categoria="${key}"></div><span>${key.charAt(0).toUpperCase() + key.slice(1)}</span></div>`).join(''); container.querySelectorAll('.legenda-cor').forEach(el => el.addEventListener('click', e => this.abrirPaletaDeCores(e.target))); }
+    abrirPaletaDeCores(elementoClicado) { this.categoriaEmEdicao = elementoClicado.dataset.categoria; const popup = document.getElementById('colorPalettePopup'); popup.innerHTML = PALETA_DE_CORES.map(cor => `<div class="palette-color" style="background-color: ${cor}" data-color="${cor}"></div>`).join(''); const rect = elementoClicado.getBoundingClientRect(); popup.style.top = `${window.scrollY + rect.bottom + 8}px`; popup.style.left = `${window.scrollX + rect.left - 48}px`; popup.style.display = 'grid'; }
+    fecharPaletaDeCores() { const popup = document.getElementById('colorPalettePopup'); if (popup) popup.style.display = 'none'; this.categoriaEmEdicao = null; }
+    selecionarCor(novaCor) { if (this.categoriaEmEdicao) { this.config.cores[this.categoriaEmEdicao] = novaCor; this.aplicarConfiguracoes(); this.renderizarLegenda(); this.renderizarTimeline(); this.autosave(); } }
+    renderizarTimeline() { this.adicionarBotaoContextual('#secaoCronograma', () => this.abrirModalAcaoParaAdicionar()); const headerContainer = document.getElementById('timeline-header'); const bodyContainer = document.getElementById('timeline-body'); headerContainer.innerHTML = ''; bodyContainer.innerHTML = ''; const anoAtual = new Date().getFullYear(); let anoDeInicio = anoAtual; if (this.acoes.length > 0) { const anosDasAcoes = this.acoes.filter(a => a.dataInicio).map(a => parseInt(a.dataInicio.substring(0, 4))); if (anosDasAcoes.length > 0) { const anoMinimo = Math.min(...anosDasAcoes); anoDeInicio = isNaN(anoMinimo) ? anoAtual : anoMinimo; } } const periodosConfig = []; for (let i = 0; i < this.config.anosVisiveis; i++) { const ano = anoDeInicio + i; if (this.tipoVisualizacao === 'semestre') { periodosConfig.push({ id: `${ano}/1`, nome: `${ano}/1` }, { id: `${ano}/2`, nome: `${ano}/2` }); } else { for (let t = 1; t <= 4; t++) periodosConfig.push({ id: `${ano}/${t}T`, nome: `${String(ano).slice(2)}/${t}T` }); } } const gridCols = `repeat(${periodosConfig.length}, 1fr)`; headerContainer.style.gridTemplateColumns = gridCols; bodyContainer.style.gridTemplateColumns = gridCols; periodosConfig.forEach(p => { headerContainer.innerHTML += `<div class="timeline-period-header"><span>${p.nome}</span></div>`; }); const hoje = new Date(); const periodoHojeKey = this.getPeriodoKey(hoje, this.tipoVisualizacao); const hojeIndex = periodosConfig.findIndex(p => p.id === periodoHojeKey); if (hojeIndex !== -1) { const { inicio, fim } = this.getPeriodoDatas(periodoHojeKey); const totalDiasPeriodo = (fim - inicio) / (1000 * 60 * 60 * 24) + 1; const diasDesdeInicio = (hoje - inicio) / (1000 * 60 * 60 * 24); const percentualNoPeriodo = Math.max(0, diasDesdeInicio / totalDiasPeriodo); const larguraColuna = 100 / periodosConfig.length; const posicaoHorizontal = (hojeIndex * larguraColuna) + (percentualNoPeriodo * larguraColuna); bodyContainer.innerHTML += `<div class="timeline-hoje-linha" style="left: ${posicaoHorizontal}%;"></div>`; } this.renderizarAcoes(periodosConfig, bodyContainer); }
+    renderizarAcoes(periodosConfig, container) { const rowsLayout = []; const acoesOrdenadas = [...this.acoes].sort((a, b) => { if (!a.dataInicio || !b.dataInicio) return 0; return new Date(a.dataInicio + '-01') - new Date(b.dataInicio + '-01'); }); acoesOrdenadas.forEach(acao => { const { colStart, colEnd } = this.calcularPosicaoAcao(acao, periodosConfig); if (colStart === -1) return; let rowStart = 1; while (true) { let isTaken = false; for (let i = colStart; i < colEnd; i++) { if (rowsLayout[i] && rowsLayout[i][rowStart]) { isTaken = true; break; } } if (!isTaken) break; rowStart++; } for (let i = colStart; i < colEnd; i++) { if (!rowsLayout[i]) rowsLayout[i] = {}; rowsLayout[i][rowStart] = true; } const acaoDiv = document.createElement('div'); acaoDiv.className = `acao ${acao.categoria}`; acaoDiv.style.gridColumn = `${colStart} / ${colEnd}`; acaoDiv.style.setProperty('--row-start', rowStart); acaoDiv.innerHTML = `<div class="acao-content"><h5>${acao.titulo}</h5>${acao.descricao ? `<p>${acao.descricao}</p>` : ''}</div><button class="btn-delete-acao" data-id="${acao.id}">×</button>`; container.appendChild(acaoDiv); acaoDiv.addEventListener('click', () => this.abrirModalAcaoParaEdicao(acao.id)); acaoDiv.querySelector('.btn-delete-acao').addEventListener('click', e => { e.stopPropagation(); this.abrirModalExclusaoItem('acao', acao.id, acao.titulo); }); }); }
+    getPeriodoKey(date, tipo) { if (!date) return null; const year = date.getFullYear(); const month = date.getMonth() + 1; if (tipo === 'semestre') return `${year}/${month <= 6 ? 1 : 2}`; else { const q = Math.ceil(month / 3); return `${year}/${q}T`; } }
+    getPeriodoDatas(key) { const [y, p] = key.split('/'); if (p.includes('T')) { const q = parseInt(p.replace('T', '')); const m = (q - 1) * 3; return { inicio: new Date(y, m, 1), fim: new Date(y, m + 3, 0) }; } else { const s = parseInt(p); const m = (s - 1) * 6; return { inicio: new Date(y, m, 1), fim: new Date(y, m + 6, 0) }; } }
+    calcularPosicaoAcao(acao, periodosConfig) { if (!acao.dataInicio || !acao.dataFim) return { colStart: -1 }; const inicio = new Date(acao.dataInicio + '-01T00:00:00'); const [fimAno, fimMes] = acao.dataFim.split('-'); const fim = new Date(fimAno, fimMes, 0); const startKey = this.getPeriodoKey(inicio, this.tipoVisualizacao); const endKey = this.getPeriodoKey(fim, this.tipoVisualizacao); const startIndex = periodosConfig.findIndex(p => p.id === startKey); let endIndex = periodosConfig.findIndex(p => p.id === endKey); if (startIndex === -1 && endIndex === -1) return { colStart: -1 }; const finalStartIndex = startIndex === -1 ? 0 : startIndex; const finalEndIndex = endIndex === -1 ? periodosConfig.length - 1 : endIndex; return { colStart: finalStartIndex + 1, colEnd: finalEndIndex + 2 }; }
 
-    gerarPeriodos() {
-        const timeline = document.getElementById('timeline');
-        timeline.innerHTML = '';
+    abrirModal(modalId) { const modal = document.getElementById(modalId); if (modal) modal.style.display = 'block'; }
+    fecharModal(modalId) { const modal = document.getElementById(modalId); if (modal) modal.style.display = 'none'; }
 
-        const periodosConfig = this.tipoVisualizacao === 'semestre'
-            ? [ { id: '2026/1', nome: '2026/1 - Jan a Jun', classe: 'atual' }, { id: '2026/2', nome: '2026/2 - Jul a Dez', classe: 'proximo' }, { id: '2027/1', nome: '2027/1 - Consolidação', classe: 'futuro' } ]
-            : [ { id: '2026/1T', nome: '2026/1T - Jan a Mar', classe: 'atual' }, { id: '2026/2T', nome: '2026/2T - Abr a Jun', classe: 'atual' }, { id: '2026/3T', nome: '2026/3T - Jul a Set', classe: 'proximo' }, { id: '2026/4T', nome: '2026/4T - Out a Dez', classe: 'proximo' }, { id: '2027/1T', nome: '2027/1T - Jan a Mar', classe: 'futuro' }, { id: '2027/2T', nome: '2027/2T - Abr a Jun', classe: 'futuro' } ];
+    abrirModalAcaoParaAdicionar() { this.acaoEmEdicaoId = null; const modal = document.getElementById('modalAcao'); modal.querySelector('#modalAcaoHeader').textContent = 'Adicionar Nova Ação'; modal.querySelector('#tituloAcao').value = ''; modal.querySelector('#descricaoAcao').value = ''; modal.querySelector('#saveAcaoBtn').textContent = 'Adicionar'; this.popularSeletoresDeData(modal, null); this.abrirModal('modalAcao'); }
+    abrirModalAcaoParaEdicao(id) { this.acaoEmEdicaoId = id; const acao = this.acoes.find(a => a.id === id); if (!acao) return; const modal = document.getElementById('modalAcao'); modal.querySelector('#modalAcaoHeader').textContent = 'Editar Ação'; modal.querySelector('#tituloAcao').value = acao.titulo; modal.querySelector('#descricaoAcao').value = acao.descricao || ''; modal.querySelector('#categoriaAcao').value = acao.categoria; modal.querySelector('#saveAcaoBtn').textContent = 'Salvar Alterações'; this.popularSeletoresDeData(modal, acao); this.abrirModal('modalAcao'); }
+    popularSeletoresDeData(modal, acao, datasPredefinidas = null) { const anoAtual = new Date().getFullYear(); const anoFim = anoAtual + 5; const seletorAnoInicio = modal.querySelector('#anoInicio'); const seletorAnoFim = modal.querySelector('#anoFim'); seletorAnoInicio.innerHTML = ''; seletorAnoFim.innerHTML = ''; for (let i = anoAtual - 2; i <= anoFim; i++) { seletorAnoInicio.innerHTML += `<option value="${i}">${i}</option>`; seletorAnoFim.innerHTML += `<option value="${i}">${i}</option>`; } if (acao) { const [inicioAno, inicioMes] = acao.dataInicio.split('-'); const [fimAno, fimMes] = acao.dataFim.split('-'); modal.querySelector('#mesInicio').value = inicioMes; seletorAnoInicio.value = inicioAno; modal.querySelector('#mesFim').value = fimMes; seletorAnoFim.value = fimAno; } else { const mesAtual = String(new Date().getMonth() + 1).padStart(2, '0'); modal.querySelector('#mesInicio').value = mesAtual; seletorAnoInicio.value = anoAtual; modal.querySelector('#mesFim').value = mesAtual; seletorAnoFim.value = anoAtual; } }
+    salvarAcao() { const data = { titulo: document.getElementById('tituloAcao').value.trim(), descricao: document.getElementById('descricaoAcao').value.trim(), dataInicio: `${document.getElementById('anoInicio').value}-${document.getElementById('mesInicio').value}`, dataFim: `${document.getElementById('anoFim').value}-${document.getElementById('mesFim').value}`, categoria: document.getElementById('categoriaAcao').value, }; if (!data.titulo) return alert("O campo Título é obrigatório."); if (new Date(data.dataFim + '-01') < new Date(data.dataInicio + '-01')) return alert("A data de fim não pode ser anterior à data de início."); if (this.acaoEmEdicaoId) { const index = this.acoes.findIndex(a => a.id === this.acaoEmEdicaoId); if (index !== -1) this.acoes[index] = { ...this.acoes[index], ...data }; } else { this.acoes.push({ id: this.proximoId++, ...data }); } this.renderizarTimeline(); this.fecharModal('modalAcao'); this.autosave(); }
 
-        periodosConfig.forEach(periodo => {
-            const periodoDiv = document.createElement('div');
-            periodoDiv.className = `periodo ${periodo.classe}`;
-            periodoDiv.dataset.periodo = periodo.id;
-            const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][periodo.id] || [];
-            periodoDiv.innerHTML = `
-                <h4>${periodo.nome}<span class="contador-cards">(${acoesDoPeriodo.length}/4)</span></h4>
-                <div class="drop-zone" data-periodo="${periodo.id}">${this.renderizarAcoes(acoesDoPeriodo)}</div>`;
-            timeline.appendChild(periodoDiv);
-        });
+    abrirModalAdicaoItem(tipo) {
+        this.itemEmEdicao = { tipo, index: null };
+        const titulos = { pontosFortes: 'Adicionar Item', metricas: 'Adicionar Métrica' };
+        const modal = document.getElementById('modalItem');
+        modal.querySelector('#modalItemHeader').textContent = titulos[tipo] || 'Adicionar Item';
+        modal.querySelector('#tituloItem').value = '';
+        modal.querySelector('#descricaoItem').value = '';
+        modal.querySelector('#saveItemBtn').textContent = 'Adicionar';
 
-        this.configurarDragAndDrop();
-    }
-
-    renderizarAcoes(idsAcoes) {
-        return idsAcoes.map(id => {
-            const acao = this.acoes.find(a => a.id === id);
-            if (!acao) return '';
-
-            const prioridadeClass = `prioridade-${acao.prioridade === 'meta' ? 'meta-principal' : acao.prioridade}`;
-            const prioridadeText = { alta: 'Alta Prioridade', media: 'Média Prioridade', baixa: 'Baixa Prioridade', meta: 'Meta Principal' }[acao.prioridade];
-
-            return `
-                <div class="acao ${acao.categoria}" draggable="true" data-id="${acao.id}">
-                    <h5>${acao.titulo}</h5>
-                    <p>${acao.descricao}</p>
-                    <div class="acao-controles">
-                        <div class="tag ${prioridadeClass}">${prioridadeText}</div>
-                        <select class="select-prioridade" data-id="${acao.id}">
-                            <option value="alta" ${acao.prioridade === 'alta' ? 'selected' : ''}>Alta</option>
-                            <option value="media" ${acao.prioridade === 'media' ? 'selected' : ''}>Média</option>
-                            <option value="baixa" ${acao.prioridade === 'baixa' ? 'selected' : ''}>Baixa</option>
-                            <option value="meta" ${acao.prioridade === 'meta' ? 'selected' : ''}>Meta</option>
-                        </select>
-                        <button class="btn-delete-acao" data-id="${acao.id}">×</button>
-                    </div>
-                </div>`;
-        }).join('');
-    }
-
-    // --- EVENT & D&D CONFIG --- //
-
-    configurarDragAndDrop() {
-        document.querySelectorAll('.acao').forEach(acao => {
-            acao.addEventListener('dragstart', (e) => {
-                this.draggedElement = acao;
-                acao.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', acao.dataset.id);
-            });
-        });
-
-        document.querySelectorAll('.drop-zone').forEach(zona => {
-            zona.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][zona.dataset.periodo] || [];
-                const isOriginZone = acoesDoPeriodo.includes(parseInt(this.draggedElement?.dataset.id));
-                zona.classList.toggle('limite-atingido', acoesDoPeriodo.length >= 4 && !isOriginZone);
-                zona.classList.add('drag-over');
-            });
-
-            zona.addEventListener('dragleave', (e) => { e.target.classList.remove('drag-over', 'limite-atingido'); });
-
-            zona.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zona.classList.remove('drag-over', 'limite-atingido');
-                if (!this.draggedElement) return;
-
-                const acaoId = parseInt(this.draggedElement.dataset.id);
-                const periodoDestino = zona.dataset.periodo;
-                const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino] || [];
-
-                if (acoesDoPeriodo.length >= 4 && !acoesDoPeriodo.includes(acaoId)) {
-                    alert('Máximo de 4 cards por período!');
-                    return;
-                }
-
-                Object.keys(this.acoesPorPeriodo[this.tipoVisualizacao]).forEach(p => {
-                    const index = this.acoesPorPeriodo[this.tipoVisualizacao][p].indexOf(acaoId);
-                    if (index > -1) this.acoesPorPeriodo[this.tipoVisualizacao][p].splice(index, 1);
-                });
-
-                if (!this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino]) {
-                    this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino] = [];
-                }
-                this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino].push(acaoId);
-                this.gerarPeriodos();
-            });
-        });
-
-        document.querySelectorAll('.select-prioridade').forEach(select => select.addEventListener('change', (e) => this.alterarPrioridade(parseInt(e.target.dataset.id), e.target.value)));
-        document.querySelectorAll('.btn-delete-acao').forEach(btn => btn.addEventListener('click', (e) => this.removerAcao(parseInt(e.target.dataset.id))));
-    }
-
-    // --- DATA MANIPULATION --- //
-
-    alterarPrioridade(acaoId, novaPrioridade) {
-        const acao = this.acoes.find(a => a.id === acaoId);
-        if (acao) {
-            acao.prioridade = novaPrioridade;
-            this.gerarPeriodos();
-        }
-    }
-
-    removerAcao(acaoId) {
-        if (!confirm('Tem certeza que deseja remover esta ação?')) return;
-        this.acoes = this.acoes.filter(a => a.id !== acaoId);
-        Object.keys(this.acoesPorPeriodo).forEach(tipo => {
-            Object.keys(this.acoesPorPeriodo[tipo]).forEach(periodo => {
-                this.acoesPorPeriodo[tipo][periodo] = this.acoesPorPeriodo[tipo][periodo].filter(id => id !== acaoId);
-            });
-        });
-        this.gerarPeriodos();
-    }
-
-    removerItem(event, tipo) {
-        const index = parseInt(event.target.dataset.index);
-        if (tipo === 'ponto-forte' && confirm('Tem certeza que deseja remover este ponto forte?')) {
-            this.pontosFortes.splice(index, 1);
-            this.renderizarPontosFortes();
-        } else if (tipo === 'metrica' && confirm('Tem certeza que deseja remover esta métrica?')) {
-            this.metricas.splice(index, 1);
-            this.renderizarMetricas();
-        }
-    }
-
-    adicionarPontoForte() {
-        const titulo = document.getElementById('tituloPF').value.trim();
-        const descricao = document.getElementById('descricaoPF').value.trim();
-        if (!titulo || !descricao) return alert('Por favor, preencha todos os campos.');
-        this.pontosFortes.push({ titulo: `💪 ${titulo}`, descricao });
-        this.renderizarPontosFortes();
-        this.fecharModal('modalPontoForte');
-    }
-
-    adicionarAcao() {
-        const titulo = document.getElementById('tituloAcao').value.trim();
-        const descricao = document.getElementById('descricaoAcao').value.trim();
-        if (!titulo || !descricao) return alert('Por favor, preencha todos os campos.');
-
-        const novaAcao = {
-            id: this.proximoId++,
-            titulo,
-            descricao,
-            categoria: document.getElementById('categoriaAcao').value,
-            prioridade: document.getElementById('prioridadeAcao').value
-        };
-        this.acoes.push(novaAcao);
-
-        const primeiroPeriodoDisponivel = Object.keys(this.acoesPorPeriodo[this.tipoVisualizacao]).find(p => this.acoesPorPeriodo[this.tipoVisualizacao][p].length < 4);
-        if (primeiroPeriodoDisponivel) {
-            this.acoesPorPeriodo[this.tipoVisualizacao][primeiroPeriodoDisponivel].push(novaAcao.id);
+        // Mostra ou oculta o seletor de tipo
+        const tipoPontoWrapper = modal.querySelector('#tipoPontoWrapper');
+        if (tipo === 'pontosFortes') {
+            tipoPontoWrapper.style.display = 'block';
+            modal.querySelector('#tipoPontoForte').checked = true; // Default para Ponto Forte
         } else {
-            alert('Todos os períodos estão cheios. A ação foi adicionada mas não alocada.');
+            tipoPontoWrapper.style.display = 'none';
         }
 
-        this.gerarPeriodos();
-        this.fecharModal('modalAcao');
+        this.abrirModal('modalItem');
     }
+    abrirModalEdicaoItem(tipo, index) {
+        this.itemEmEdicao = { tipo, index };
+        const titulos = { pontosFortes: 'Editar Ponto Forte', pontosDeMelhoria: 'Editar Ponto de Melhoria', metricas: 'Editar Métrica' };
+        const array = this[tipo];
+        const item = array[index];
+        const modal = document.getElementById('modalItem');
 
-    adicionarMetrica() {
-        const titulo = document.getElementById('tituloMetrica').value.trim();
-        const descricao = document.getElementById('descricaoMetrica').value.trim();
-        if (!titulo || !descricao) return alert('Por favor, preencha todos os campos.');
-        this.metricas.push({ titulo, descricao });
-        this.renderizarMetricas();
-        this.fecharModal('modalMetrica');
+        modal.querySelector('#tipoPontoWrapper').style.display = 'none'; // Oculta na edição
+        modal.querySelector('#modalItemHeader').textContent = titulos[tipo];
+        modal.querySelector('#tituloItem').value = item.titulo;
+        modal.querySelector('#descricaoItem').value = item.descricao;
+        modal.querySelector('#saveItemBtn').textContent = 'Salvar Alterações';
+        this.abrirModal('modalItem');
     }
+    salvarItem() {
+        if (!this.itemEmEdicao) return;
+        let { tipo, index } = this.itemEmEdicao;
+        const data = { titulo: document.getElementById('tituloItem').value.trim(), descricao: document.getElementById('descricaoItem').value.trim() };
+        if (!data.titulo) return alert("O campo Título é obrigatório.");
 
-    // --- MODAL & STORAGE --- //
-
-    abrirModal(modalId) { document.getElementById(modalId).style.display = 'block'; }
-
-    fecharModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'none';
-            const form = modal.querySelector('.modal-content');
-            if(form) form.querySelectorAll('input, textarea, select').forEach(el => {
-                if(el.tagName !== 'SELECT') el.value = '';
-            });
+        if (index === null) { // Adicionando
+            const tipoSelecionado = document.querySelector('input[name="tipoPonto"]:checked')?.value;
+            tipo = tipoSelecionado || tipo; // Usa o tipo do rádio, ou o tipo original se o rádio estiver oculto
         }
+
+        if (index !== null) { this[tipo][index] = data; }
+        else { this[tipo].push(data); }
+
+        this.renderizarComponentesEstaticos();
+        this.fecharModal('modalItem');
+        this.itemEmEdicao = null;
+        this.autosave();
     }
 
-    salvarPDI() {
-        const dadosPDI = {
-            pontosFortes: this.pontosFortes,
-            acoes: this.acoes,
-            acoesPorPeriodo: this.acoesPorPeriodo,
-            metricas: this.metricas,
-            tipoVisualizacao: this.tipoVisualizacao,
-            proximoId: this.proximoId
-        };
-        localStorage.setItem('pdiData', JSON.stringify(dadosPDI));
-        alert('PDI salvo com sucesso!');
-    }
+    abrirModalExclusaoItem(tipo, idOuIndex, titulo) { this.itemParaExcluir = { tipo, id: idOuIndex }; document.getElementById('nomeItemExcluir').textContent = titulo; this.abrirModal('modalConfirmarExclusaoItem'); }
+    confirmarExclusaoItem() { if (!this.itemParaExcluir) return; const { tipo, id } = this.itemParaExcluir; if (tipo === 'acao') this.acoes = this.acoes.filter(a => a.id !== id); else { this[tipo].splice(id, 1); } this.itemParaExcluir = null; this.renderizarTudo(); this.fecharModal('modalConfirmarExclusaoItem'); this.autosave(); }
 
-    carregarPDI(silencioso = false) {
-        const dadosSalvos = localStorage.getItem('pdiData');
-        if (dadosSalvos) {
-            const dadosPDI = JSON.parse(dadosSalvos);
-            this.pontosFortes = dadosPDI.pontosFortes;
-            this.acoes = dadosPDI.acoes;
-            this.acoesPorPeriodo = dadosPDI.acoesPorPeriodo;
-            this.metricas = dadosPDI.metricas;
-            this.tipoVisualizacao = dadosPDI.tipoVisualizacao;
-            this.proximoId = dadosPDI.proximoId;
-            if (!silencioso) {
-                this.renderizarTudo();
-                alert('PDI carregado com sucesso!');
-            }
-        } else {
-            this.dadosIniciais(); // Carrega os dados default se não houver nada salvo
-            if (!silencioso) alert('Nenhum PDI salvo encontrado. Carregando modelo padrão.');
-        }
-    }
+    criarModaisDinamicos() { const mesesOptions = Array.from({ length: 12 }, (_, i) => `<option value="${String(i + 1).padStart(2, '0')}">${new Date(0, i).toLocaleString('pt-BR', { month: 'long' })}</option>`).join(''); const container = document.getElementById('modal-container'); container.innerHTML = `<div id="modalAcao" class="modal"><div class="modal-content"><h3 class="modal-header" id="modalAcaoHeader">Adicionar Ação</h3><div class="form-group"><label for="tituloAcao">Título:</label><input type="text" id="tituloAcao"></div><div class="form-group"><label for="descricaoAcao">Descrição (Opcional):</label><textarea id="descricaoAcao"></textarea></div><div class="form-group-row"><div class="form-group"><label>Início:</label><div class="form-group-row"><select id="mesInicio">${mesesOptions}</select><select id="anoInicio"></select></div></div><div class="form-group"><label>Fim:</label><div class="form-group-row"><select id="mesFim">${mesesOptions}</select><select id="anoFim"></select></div></div></div><div class="form-group"><label for="categoriaAcao">Categoria:</label><select id="categoriaAcao">${Object.keys(this.config.cores).map(c => `<option value="${c}">${c.charAt(0).toUpperCase() + c.slice(1)}</option>`).join('')}</select></div><div class="modal-buttons"><button class="btn btn-cancel">Cancelar</button><button class="btn" id="saveAcaoBtn">Adicionar</button></div></div></div><div id="modalItem" class="modal"><div class="modal-content"><h3 class="modal-header" id="modalItemHeader">Editar Item</h3><div class="form-group" id="tipoPontoWrapper" style="display: none;"><label>Tipo:</label><div class="radio-group"><input type="radio" id="tipoPontoForte" name="tipoPonto" value="pontosFortes" checked><label for="tipoPontoForte">Ponto Forte</label><input type="radio" id="tipoPontoMelhoria" name="tipoPonto" value="pontosDeMelhoria"><label for="tipoPontoMelhoria">Ponto de Melhoria</label></div></div><div class="form-group"><label for="tituloItem">Título:</label><input type="text" id="tituloItem"></div><div class="form-group"><label for="descricaoItem">Descrição:</label><textarea id="descricaoItem"></textarea></div><div class="modal-buttons"><button class="btn btn-cancel">Cancelar</button><button class="btn" id="saveItemBtn">Salvar</button></div></div></div><div id="modalConfirmarExclusaoItem" class="modal"><div class="modal-content"><h3 class="modal-header">Confirmar Exclusão</h3><p>Tem certeza que deseja excluir o item: "<strong><span id="nomeItemExcluir"></span></strong>"?</p><div class="modal-buttons"><button class="btn btn-cancel">Cancelar</button><button class="btn btn-delete" id="confirmExclusaoItem">Confirmar</button></div></div></div>`; }
+
+    renderizarPontosFortes() { const container = document.getElementById('pontosFortesContainer'); if (!container) return; this.adicionarBotaoContextual('#secaoPontosFortes', () => this.abrirModalAdicaoItem('pontosFortes')); container.innerHTML = this.pontosFortes.map((item, index) => `<div class="ponto-forte card-editavel" data-index="${index}"><h4>${item.titulo}</h4><p>${item.descricao}</p><button class="btn-delete" data-index="${index}">×</button></div>`).join(''); container.querySelectorAll('.btn-delete').forEach((btn, index) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.abrirModalExclusaoItem('pontosFortes', index, this.pontosFortes[index].titulo); })); container.querySelectorAll('.card-editavel').forEach((card, index) => card.addEventListener('click', () => this.abrirModalEdicaoItem('pontosFortes', index))); }
+    renderizarPontosDeMelhoria() { const container = document.getElementById('pontosMelhoriaContainer'); const secao = document.getElementById('secaoPontosMelhoria'); const grid = document.querySelector('.secao-grid'); if (!container || !secao || !grid) return; if (this.pontosDeMelhoria.length === 0) { secao.style.display = 'none'; grid.classList.add('full-width'); } else { secao.style.display = 'block'; grid.classList.remove('full-width'); container.innerHTML = this.pontosDeMelhoria.map((item, index) => `<div class="ponto-melhoria card-editavel" data-index="${index}"><h4>${item.titulo}</h4><p>${item.descricao}</p><button class="btn-delete" data-index="${index}">×</button></div>`).join(''); container.querySelectorAll('.btn-delete').forEach((btn, index) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.abrirModalExclusaoItem('pontosDeMelhoria', index, this.pontosDeMelhoria[index].titulo); })); container.querySelectorAll('.card-editavel').forEach((card, index) => card.addEventListener('click', () => this.abrirModalEdicaoItem('pontosDeMelhoria', index))); } }
+    renderizarMetricas() { const container = document.getElementById('metricasContainer'); if (!container) return; this.adicionarBotaoContextual('#secaoMetricas', () => this.abrirModalAdicaoItem('metricas')); container.innerHTML = this.metricas.map((item, index) => `<div class="metrica-item card-editavel" data-index="${index}"><h5>${item.titulo}</h5><p style="white-space: pre-wrap;">${item.descricao}</p><button class="btn-delete" data-index="${index}">×</button></div>`).join(''); container.querySelectorAll('.btn-delete').forEach((btn, index) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.abrirModalExclusaoItem('metricas', index, this.metricas[index].titulo); })); container.querySelectorAll('.card-editavel').forEach((card, index) => card.addEventListener('click', () => this.abrirModalEdicaoItem('metricas', index))); }
+
+    autosave() { const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId }; localStorage.setItem('pdiDataGantt', JSON.stringify(dados)); }
+    exportarPDI() { const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId }; const jsonString = JSON.stringify(dados, null, 2); const blob = new Blob([jsonString], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'meu-pdi.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+    carregarArquivo(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => { try { const dados = JSON.parse(e.target.result); this.aplicarDadosCarregados(dados); alert('PDI carregado com sucesso!'); } catch (error) { console.error("Erro ao carregar o arquivo JSON:", error); alert('Erro: O arquivo selecionado não é um JSON válido.'); } }; reader.readAsText(file); event.target.value = null; }
+    aplicarDadosCarregados(dados) { if (!dados.pontosDeMelhoria) dados.pontosDeMelhoria = []; Object.assign(this, dados); if (!this.config) { const temp = {}; this.dadosIniciais.apply(temp); this.config = temp.config; } this.renderizarTudo(); this.autosave(); }
+    carregarPDI(silencioso = false) { const dadosSalvos = localStorage.getItem('pdiDataGantt'); if (dadosSalvos) { this.aplicarDadosCarregados(JSON.parse(dadosSalvos)); if (!silencioso) alert('PDI carregado do backup local.'); } else { this.dadosIniciais(); } }
 }
 
+function CustomSelect(wrapper) { const selectEl = wrapper.querySelector('select'); if (!selectEl) return; const selectedDiv = document.createElement('div'); selectedDiv.className = 'select-selected'; selectedDiv.innerHTML = selectEl.options[selectEl.selectedIndex].innerHTML; wrapper.appendChild(selectedDiv); const optionsDiv = document.createElement('div'); optionsDiv.className = 'select-items select-hide'; Array.from(selectEl.options).forEach((option, index) => { const optionDiv = document.createElement('div'); optionDiv.innerHTML = option.innerHTML; if (index === selectEl.selectedIndex) optionDiv.className = "same-as-selected"; optionDiv.addEventListener('click', function () { selectEl.selectedIndex = index; selectedDiv.innerHTML = this.innerHTML; optionsDiv.querySelectorAll('.same-as-selected').forEach(o => o.removeAttribute('class')); this.className = 'same-as-selected'; selectedDiv.click(); selectEl.dispatchEvent(new Event('change')); }); optionsDiv.appendChild(optionDiv); }); wrapper.appendChild(optionsDiv); selectedDiv.addEventListener('click', function (e) { e.stopPropagation(); closeAllSelects(this); optionsDiv.classList.toggle('select-hide'); this.classList.toggle('select-arrow-active'); }); }
+function closeAllSelects(elmnt) { document.querySelectorAll('.select-items').forEach(item => { if (elmnt && elmnt.nextElementSibling !== item && elmnt !== item.previousElementSibling) { item.classList.add('select-hide'); if (item.previousElementSibling) item.previousElementSibling.classList.remove('select-arrow-active'); } }); }
+
+document.addEventListener('click', e => closeAllSelects(e.target));
 document.addEventListener('DOMContentLoaded', () => {
     window.pdiApp = new PDI();
     window.pdiApp.init();
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => new CustomSelect(wrapper));
 });

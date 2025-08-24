@@ -38,7 +38,7 @@ body {
 }
 
 .objetivo-principal {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    background: linear-gradient(135deg, #6b90ff, #9724ee);
     color: white;
     padding: 25px;
     margin: 20px;
@@ -164,30 +164,14 @@ select:focus {
 }
 
 .periodo {
-    background: #f8f9fa;
-    border-radius: 15px;
+    background: white;
     padding: 20px;
-    border-left: 5px solid;
     position: relative;
     min-height: 200px;
     min-width: 300px;
     flex: 1;
 }
 
-.periodo.atual {
-    border-left-color: #ff6b6b;
-    background: linear-gradient(135deg, #fff5f5, #ffe8e8);
-}
-
-.periodo.proximo {
-    border-left-color: #ffa726;
-    background: linear-gradient(135deg, #fff8e1, #ffecb3);
-}
-
-.periodo.futuro {
-    border-left-color: #42a5f5;
-    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-}
 
 .periodo h4 {
     color: #2c3e50;
@@ -196,6 +180,8 @@ select:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-bottom: 2px solid #3498db;
+
 }
 
 .periodo h4::before {
@@ -231,8 +217,7 @@ select:focus {
     background: white;
     margin: 10px 0;
     padding: 15px;
-    border-radius: 10px;
-    border-left: 4px solid;
+    border-left: 5px solid;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     transition: all 0.3s ease;
     cursor: grab;
@@ -260,10 +245,6 @@ select:focus {
 
 .acao.lideranca {
     border-left-color: #e74c3c;
-}
-
-.acao.certificacao {
-    border-left-color: #f39c12;
 }
 
 .acao h5 {
@@ -472,7 +453,8 @@ select:focus {
         align-items: stretch;
     }
     
-    .periodo {
+    .periodoperiodo {
         min-width: 100%;
+        background: #bbdefb
     }
 }

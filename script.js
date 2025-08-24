@@ -25,7 +25,7 @@ class PDI {
                 id: 3,
                 titulo: "☁️ AWS Solutions Architect",
                 descricao: "Iniciar estudos para certificação AWS focando em arquitetura de soluções",
-                categoria: "certificacao",
+                categoria: "tecnico",
                 prioridade: "media"
             },
             {

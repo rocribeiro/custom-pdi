@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDI - Plano de Desenvolvimento Individual</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PDI - Plano de Desenvolvimento Individual</h1>
+            <p>Jornada para Coordenação Técnica</p>
+        </div>
+
+        <div class="objetivo-principal">
+            <h2>🎯 Objetivo Principal</h2>
+            <p><strong>Iniciar entrevistas para posição de Coordenação até Julho de 2026</strong></p>
+            <p>Status atual: Promovido em Janeiro/2026 ✅</p>
+        </div>
+
+        <div class="controles">
+            <div class="controle-grupo">
+                <label for="tipoVisualizacao">Visualização:</label>
+                <select id="tipoVisualizacao">
+                    <option value="semestre">Por Semestre</option>
+                    <option value="trimestre">Por Trimestre</option>
+                </select>
+            </div>
+            <button class="btn btn-add" id="btnAddPontoForte">+ Adicionar Ponto Forte</button>
+            <button class="btn btn-add" id="btnAddAcao">+ Adicionar Ação</button>
+            <button class="btn" id="btnSalvarPDI">💾 Salvar PDI</button>
+            <button class="btn" id="btnCarregarPDI">📂 Carregar PDI</button>
+        </div>
+
+        <div class="secao">
+            <h3>💪 Pontos Fortes Atuais</h3>
+            <div class="pontos-fortes" id="pontosFortes">
+                <div class="ponto-forte">
+                    <button class="btn-delete">×</button>
+                    <h4>🗣️ Comunicação</h4>
+                    <p>Habilidade consolidada para articulação e alinhamento entre equipes</p>
+                </div>
+                <div class="ponto-forte">
+                    <button class="btn-delete">×</button>
+                    <h4>⚡ Tomada de Decisões</h4>
+                    <p>Capacidade analítica e agilidade em decisões estratégicas</p>
+                </div>
+                <div class="ponto-forte">
+                    <button class="btn-delete">×</button>
+                    <h4>🤝 Proximidade com Produtos</h4>
+                    <p>Relacionamento estabelecido e entendimento do negócio</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="secao">
+            <h3>📚 Áreas de Desenvolvimento</h3>
+            <div class="legenda">
+                <div class="legenda-item">
+                    <div class="legenda-cor" style="background: #3498db;"></div>
+                    <span>Técnico</span>
+                </div>
+                <div class="legenda-item">
+                    <div class="legenda-cor" style="background: #9b59b6;"></div>
+                    <span>Produto</span>
+                </div>
+                <div class="legenda-item">
+                    <div class="legenda-cor" style="background: #e74c3c;"></div>
+                    <span>Liderança</span>
+                </div>
+                <div class="legenda-item">
+                    <div class="legenda-cor" style="background: #f39c12;"></div>
+                    <span>Certificação</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="secao">
+            <h3>🗓️ Cronograma de Desenvolvimento</h3>
+                <div class="timeline" id="timeline"></div>
+            </div>
+        </div>
+
+        <div class="metricas">
+            <h3>📊 Métricas de Acompanhamento</h3>
+            
+            <div class="metrica-item">
+                <h5>📚 Conhecimento Técnico</h5>
+                <p>• Concluir 2 cursos avançados de backend por semestre<br>
+                • Contribuir com 1 artigo técnico trimestral<br>
+                • Apresentar 1 tech talk por semestre</p>
+            </div>
+
+            <div class="metrica-item">
+                <h5>🎯 Conhecimento de Produto</h5>
+                <p>• Participar de 100% das demos de produto<br>
+                • Criar 2 análises de impacto técnico-produto por mês<br>
+                • Mapear 3 principais métricas de cada squad</p>
+            </div>
+
+            <div class="metrica-item">
+                <h5>👑 Liderança</h5>
+                <p>• Feedback positivo de mentorados (>4.0/5.0)<br>
+                • Liderar 2 projetos cross-funcionais<br>
+                • Obter feedback 360° trimestral</p>
+            </div>
+
+            <div class="metrica-item">
+                <h5>🏆 Certificações</h5>
+                <p>• AWS Solutions Architect até Dezembro/2026<br>
+                • Avaliar necessidade de certificações adicionais<br>
+                • Manter conhecimentos atualizados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ponto Forte -->
+    <div id="modalPontoForte" class="modal">
+        <div class="modal-content">
+            <h3>Adicionar Ponto Forte</h3>
+            <div class="form-group">
+                <label for="tituloPF">Título:</label>
+                <input type="text" id="tituloPF" placeholder="Ex: Liderança Técnica">
+            </div>
+            <div class="form-group">
+                <label for="descricaoPF">Descrição:</label>
+                <textarea id="descricaoPF" placeholder="Descreva este ponto forte..."></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" id="cancelPontoForte">Cancelar</button>
+                <button class="btn" id="addPontoForte">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ação -->
+    <div id="modalAcao" class="modal">
+        <div class="modal-content">
+            <h3>Adicionar Ação</h3>
+            <div class="form-group">
+                <label for="tituloAcao">Título:</label>
+                <input type="text" id="tituloAcao" placeholder="Ex: Estudar Microserviços">
+            </div>
+            <div class="form-group">
+                <label for="descricaoAcao">Descrição:</label>
+                <textarea id="descricaoAcao" placeholder="Descreva a ação..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="categoriaAcao">Categoria:</label>
+                <select id="categoriaAcao">
+                    <option value="tecnico">Técnico</option>
+                    <option value="produto">Produto</option>
+                    <option value="lideranca">Liderança</option>
+                    <option value="certificacao">Certificação</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridadeAcao">Prioridade:</label>
+                <select id="prioridadeAcao">
+                    <option value="alta">Alta Prioridade</option>
+                    <option value="media">Média Prioridade</option>
+                    <option value="baixa">Baixa Prioridade</option>
+                    <option value="meta">Meta Principal</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-cancel" id="cancelAcao">Cancelar</button>
+                <button class="btn" id="addAcao">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

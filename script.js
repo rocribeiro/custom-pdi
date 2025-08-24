@@ -1,210 +1,310 @@
-// Dados do PDI
-class PDI {
+class PDIApp {
     constructor() {
         this.tipoVisualizacao = 'semestre';
-        this.draggedElement = null;
         this.proximoId = 7;
-        
-        // Dados iniciais das ações
-        this.acoes = [
-            {
-                id: 1,
-                titulo: "🔧 Aprofundamento Backend",
-                descricao: "Estudar arquiteturas distribuídas, microserviços e padrões de design (Strategy, Observer, Command)",
-                categoria: "tecnico",
-                prioridade: "alta"
-            },
-            {
-                id: 2,
-                titulo: "📊 1x1 com Coordenador de Produtos",
-                descricao: "Reuniões quinzenais para entender métricas de produto, roadmap e estratégia de negócio",
-                categoria: "produto",
-                prioridade: "alta"
-            },
-            {
-                id: 3,
-                titulo: "☁️ AWS Solutions Architect",
-                descricao: "Iniciar estudos para certificação AWS focando em arquitetura de soluções",
-                categoria: "tecnico",
-                prioridade: "media"
-            },
-            {
-                id: 4,
-                titulo: "👥 Mentoria de Juniors",
-                descricao: "Assumir mentoria de 1-2 desenvolvedores juniors para desenvolver habilidades de liderança",
-                categoria: "lideranca",
-                prioridade: "media"
-            },
-            {
-                id: 5,
-                titulo: "🎯 Iniciar Processo de Entrevistas",
-                descricao: "Começar aplicações para posições de coordenação técnica",
-                categoria: "lideranca",
-                prioridade: "meta"
-            },
-            {
-                id: 6,
-                titulo: "🏗️ Liderar Projeto de Arquitetura",
-                descricao: "Propor e liderar refatoração de sistema legado aplicando novos conhecimentos",
-                categoria: "tecnico",
-                prioridade: "alta"
-            }
-        ];
+        this.draggedElement = null;
 
-        // Ajuste: métricas categorizadas e com IDs
-        this.metricas = [
-            { id: 101, tipo: 'tecnico', text: "Concluir 2 cursos avançados de backend por semestre" },
-            { id: 102, tipo: 'tecnico', text: "Contribuir com 1 artigo técnico trimestral" },
-            { id: 103, tipo: 'tecnico', text: "Apresentar 1 tech talk por semestre" },
+        this.pontosFortes = [];
+        this.acoes = [];
+        this.acoesPorPeriodo = {};
+        this.metricas = [];
 
-            { id: 201, tipo: 'produto', text: "Participar de 100% das demos de produto" },
-            { id: 202, tipo: 'produto', text: "Criar 2 análises de impacto técnico-produto por mês" },
-            { id: 203, tipo: 'produto', text: "Mapear 3 principais métricas de cada squad" },
-
-            { id: 301, tipo: 'lideranca', text: "Feedback positivo de mentorados (>4.0/5.0)" },
-            { id: 302, tipo: 'lideranca', text: "Liderar 2 projetos cross-funcionais" },
-            { id: 303, tipo: 'lideranca', text: "Obter feedback 360° trimestral" },
-
-            { id: 401, tipo: 'certificacao', text: "AWS Solutions Architect até Dezembro/2026" },
-            { id: 402, tipo: 'certificacao', text: "Avaliar necessidade de certificações adicionais" },
-            { id: 403, tipo: 'certificacao', text: "Manter conhecimentos atualizados" }
-        ];
-
-
-        // Mapeamento das ações por período
-        this.acoesPorPeriodo = {
-            'semestre': {
-                '2026/1': [1, 2, 3, 4],
-                '2026/2': [5, 6],
-                '2027/1': []
-            },
-            'trimestre': {
-                '2026/1T': [1, 2],
-                '2026/2T': [3, 4],
-                '2026/3T': [5],
-                '2026/4T': [6],
-                '2027/1T': [],
-                '2027/2T': []
-            }
-        };
-        
-        // Pontos fortes iniciais
-        this.pontosFortes = [
-            {
-                titulo: "🗣️ Comunicação",
-                descricao: "Habilidade consolidada para articulação e alinhamento entre equipes"
-            },
-            {
-                titulo: "⚡ Tomada de Decisões",
-                descricao: "Capacidade analítica e agilidade em decisões estratégicas"
-            },
-            {
-                titulo: "🤝 Proximidade com Produtos",
-                descricao: "Relacionamento estabelecido e entendimento do negócio"
-            }
-        ];
-        
         this.init();
     }
-    
-    init() {
-        this.setupEventListeners();
-        this.renderizarPontosFortes();
-        this.renderizrarMetricas();
-        this.gerarPeriodos();
 
+    /* =========================
+       🔹 Inicialização
+    ========================== */
+    init() {
+        this.bindUIEvents();
+        this.loadFromStorage();
+        this.render();
     }
-    
-    setupEventListeners() {
-        // Visualização
-        document.getElementById('tipoVisualizacao').addEventListener('change', (e) => {
-            this.tipoVisualizacao = e.target.value;
-            this.gerarPeriodos();
-        });
-        
-        // Botões de adicionar
-        document.getElementById('btnAddPontoForte').addEventListener('click', () => this.abrirModal('modalPontoForte'));
-        document.getElementById('btnAddAcao').addEventListener('click', () => this.abrirModal('modalAcao'));
-        
-        // Botões de salvar/carregar
-        document.getElementById('btnSalvarPDI').addEventListener('click', () => this.salvarPDI());
-        document.getElementById('btnCarregarPDI').addEventListener('click', () => this.carregarPDI());
-        
-        // Modal Ponto Forte
-        document.getElementById('addPontoForte').addEventListener('click', () => this.adicionarPontoForte());
-        document.getElementById('cancelPontoForte').addEventListener('click', () => this.fecharModal('modalPontoForte'));
-        
-        // Modal Ação
-        document.getElementById('addAcao').addEventListener('click', () => this.adicionarAcao());
-        document.getElementById('cancelAcao').addEventListener('click', () => this.fecharModal('modalAcao'));
-        
-        // Event listeners para fechar modal clicando fora
-        window.addEventListener('click', (event) => {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+
+    bindUIEvents() {
+        // Botões principais
+        document.getElementById('tipoVisualizacao')
+            .addEventListener('change', e => {
+                this.tipoVisualizacao = e.target.value;
+                this.renderTimeline();
+                this.saveToStorage();
             });
+
+        document.getElementById('btnAddPontoForte')
+            .addEventListener('click', () => this.showModal('modalPontoForte'));
+        document.getElementById('btnAddAcao')
+            .addEventListener('click', () => this.showModal('modalAcao'));
+
+        document.getElementById('addPontoForte')
+            .addEventListener('click', () => this.addPontoForte());
+        document.getElementById('cancelPontoForte')
+            .addEventListener('click', () => this.hideModal('modalPontoForte'));
+
+        document.getElementById('addAcao')
+            .addEventListener('click', () => this.addAcao());
+        document.getElementById('cancelAcao')
+            .addEventListener('click', () => this.hideModal('modalAcao'));
+
+        // Exportar/Importar
+        document.getElementById('btnExportarPDI')
+            .addEventListener('click', () => this.exportJSON());
+        document.getElementById('btnImportarPDI')
+            .addEventListener('click', () => document.getElementById('inputImportarPDI').click());
+        document.getElementById('inputImportarPDI')
+            .addEventListener('change', e => this.importJSON(e));
+
+        // Fechar modal clicando fora
+        window.addEventListener('click', e => {
+            if (e.target.classList.contains('modal')) e.target.style.display = 'none';
         });
-        
-        // Event listeners para drag and drop
-        document.addEventListener('dragend', () => {
-            const dropZones = document.querySelectorAll('.drop-zone');
-            dropZones.forEach(zone => {
-                zone.classList.remove('drag-over', 'limite-atingido');
-            });
-            
-            if (this.draggedElement) {
-                this.draggedElement.classList.remove('dragging');
-                this.draggedElement = null;
-            }
-        });
-        
-        document.addEventListener('dragleave', (event) => {
-            if (event.target.classList.contains('drop-zone')) {
-                event.target.classList.remove('drag-over', 'limite-atingido');
-            }
-        });
+
+        // Drag & Drop
+        document.addEventListener('dragend', () => this.resetDragState());
     }
-    
-    renderizarPontosFortes() {
+
+    /* =========================
+       🔹 Renderização
+    ========================== */
+    render() {
+        this.renderPontosFortes();
+        this.renderTimeline();
+        this.renderMetricas();
+    }
+
+    renderPontosFortes() {
         const container = document.getElementById('pontosFortes');
-        container.innerHTML = '';
-        
-        this.pontosFortes.forEach((pontoForte, index) => {
-            const div = document.createElement('div');
-            div.className = 'ponto-forte';
-            div.innerHTML = `
-                <button class="btn-delete" data-index="${index}">×</button>
-                <h4>${pontoForte.titulo}</h4>
-                <p>${pontoForte.descricao}</p>
-            `;
-            container.appendChild(div);
-        });
-        
-        // Adicionar event listeners para os botões de deletar
-        document.querySelectorAll('.ponto-forte .btn-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                this.removerPontoForte(index);
-            });
-        });
+        container.innerHTML = this.pontosFortes.map((pf, idx) => `
+            <div class="ponto-forte">
+                <button class="btn-delete" data-index="${idx}">x</button>
+                <h4>${pf.titulo}</h4>
+                <p>${pf.descricao}</p>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('.btn-delete').forEach(btn =>
+            btn.addEventListener('click', e => this.removePontoForte(e.target.dataset.index))
+        );
     }
-    
-    gerarPeriodos() {
+
+    renderTimeline() {
         const timeline = document.getElementById('timeline');
         timeline.innerHTML = '';
 
-        let periodos;
-        if (this.tipoVisualizacao === 'semestre') {
-            periodos = [
+        const periodos = this.getPeriodos();
+        periodos.forEach(periodo => {
+            const idsAcoes = this.acoesPorPeriodo[this.tipoVisualizacao]?.[periodo.id] || [];
+            timeline.innerHTML += `
+                <div class="periodo ${periodo.classe}" data-periodo="${periodo.id}">
+                    <h4>${periodo.nome} <span class="contador-cards">(${idsAcoes.length}/4)</span></h4>
+                    <div class="drop-zone" data-periodo="${periodo.id}">
+                        ${idsAcoes.map(id => this.renderAcao(id)).join('')}
+                    </div>
+                </div>
+            `;
+        });
+
+        this.bindDragAndDrop();
+    }
+
+    renderAcao(id) {
+        const acao = this.acoes.find(a => a.id === id);
+        if (!acao) return '';
+
+        const prioridadeClass = acao.prioridade === 'meta' ? 'meta-principal' : `prioridade-${acao.prioridade}`;
+        const prioridadeLabel = {
+            alta: 'Alta',
+            media: 'Média',
+            baixa: 'Baixa',
+            meta: 'Meta Principal'
+        }[acao.prioridade];
+
+        return `
+            <div class="acao ${acao.categoria}" draggable="true" data-id="${acao.id}">
+                <h5>${acao.titulo}</h5>
+                <p>${acao.descricao}</p>
+                <div class="acao-controles">
+                    <div class="tag ${prioridadeClass}">${prioridadeLabel}</div>
+                    <select class="select-prioridade" data-id="${acao.id}">
+                        <option value="alta" ${acao.prioridade === 'alta' ? 'selected' : ''}>Alta</option>
+                        <option value="media" ${acao.prioridade === 'media' ? 'selected' : ''}>Média</option>
+                        <option value="baixa" ${acao.prioridade === 'baixa' ? 'selected' : ''}>Baixa</option>
+                        <option value="meta" ${acao.prioridade === 'meta' ? 'selected' : ''}>Meta</option>
+                    </select>
+                    <button class="btn-delete-acao" data-id="${acao.id}">🗑️</button>
+                </div>
+            </div>
+        `;
+    }
+
+    renderMetricas() {
+        const container = document.getElementById('metricasContainer');
+        container.innerHTML = `
+            <h3>📊 Métricas de Acompanhamento</h3>
+            <button class="btn btn-add" id="btnAddMetrica">Nova Métrica</button>
+            ${this.metricas.map((m, idx) => `
+                <div class="metrica-item">
+                    <button class="btn-delete" data-index="${idx}">🗑️</button>
+                    <h5>${m.titulo}</h5>
+                    <p>${m.descricao.replace(/\n/g, '<br>')}</p>
+                </div>
+            `).join('')}
+        `;
+
+        document.getElementById('btnAddMetrica')
+            .addEventListener('click', () => this.addMetrica());
+
+        container.querySelectorAll('.btn-delete').forEach(btn =>
+            btn.addEventListener('click', e => this.removeMetrica(e.target.dataset.index))
+        );
+    }
+
+    /* =========================
+       🔹 CRUD
+    ========================== */
+    addPontoForte() {
+        const titulo = document.getElementById('tituloPF').value.trim();
+        const descricao = document.getElementById('descricaoPF').value.trim();
+        if (!titulo || !descricao) return alert('Preencha todos os campos.');
+
+        this.pontosFortes.push({ titulo: `💪 ${titulo}`, descricao });
+        this.hideModal('modalPontoForte');
+        this.persist();
+    }
+
+    removePontoForte(index) {
+        this.pontosFortes.splice(index, 1);
+        this.persist();
+    }
+
+    addAcao() {
+        const titulo = document.getElementById('tituloAcao').value.trim();
+        const descricao = document.getElementById('descricaoAcao').value.trim();
+        const categoria = document.getElementById('categoriaAcao').value;
+        const prioridade = document.getElementById('prioridadeAcao').value;
+
+        if (!titulo || !descricao) return alert('Preencha todos os campos.');
+
+        const novaAcao = { id: this.proximoId++, titulo, descricao, categoria, prioridade };
+        this.acoes.push(novaAcao);
+
+        // Adiciona ao primeiro período com espaço
+        const periodos = Object.keys(this.acoesPorPeriodo[this.tipoVisualizacao]);
+        for (const periodo of periodos) {
+            if (this.acoesPorPeriodo[this.tipoVisualizacao][periodo].length < 4) {
+                this.acoesPorPeriodo[this.tipoVisualizacao][periodo].push(novaAcao.id);
+                break;
+            }
+        }
+
+        this.hideModal('modalAcao');
+        this.persist();
+    }
+
+    removeAcao(id) {
+        this.acoes = this.acoes.filter(a => a.id !== id);
+        Object.values(this.acoesPorPeriodo).forEach(periodoMap => {
+            Object.keys(periodoMap).forEach(p => {
+                periodoMap[p] = periodoMap[p].filter(aid => aid !== id);
+            });
+        });
+        this.persist();
+    }
+
+    addMetrica() {
+        const titulo = prompt("Título da métrica:");
+        const descricao = prompt("Descrição (use quebras de linha para separar):");
+        if (!titulo || !descricao) return;
+        this.metricas.push({ titulo, descricao });
+        this.persist();
+    }
+
+    removeMetrica(index) {
+        this.metricas.splice(index, 1);
+        this.persist();
+    }
+
+    /* =========================
+       🔹 Drag & Drop
+    ========================== */
+    bindDragAndDrop() {
+        document.querySelectorAll('.acao').forEach(el => {
+            el.addEventListener('dragstart', e => {
+                this.draggedElement = el;
+                el.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', el.dataset.id);
+            });
+        });
+
+        document.querySelectorAll('.drop-zone').forEach(zona => {
+            zona.addEventListener('dragover', e => {
+                e.preventDefault();
+                const periodo = zona.dataset.periodo;
+                const ids = this.acoesPorPeriodo[this.tipoVisualizacao][periodo] || [];
+                zona.classList.toggle('limite-atingido', ids.length >= 4);
+                zona.classList.add('drag-over');
+            });
+
+            zona.addEventListener('drop', e => {
+                e.preventDefault();
+                if (!this.draggedElement) return;
+                const acaoId = parseInt(this.draggedElement.dataset.id);
+                this.moveAcaoParaPeriodo(acaoId, zona.dataset.periodo);
+            });
+
+            zona.addEventListener('dragleave', () =>
+                zona.classList.remove('drag-over', 'limite-atingido'));
+        });
+
+        document.querySelectorAll('.select-prioridade').forEach(sel =>
+            sel.addEventListener('change', e => {
+                const acao = this.acoes.find(a => a.id === parseInt(e.target.dataset.id));
+                if (acao) {
+                    acao.prioridade = e.target.value;
+                    this.persist();
+                }
+            })
+        );
+
+        document.querySelectorAll('.btn-delete-acao').forEach(btn =>
+            btn.addEventListener('click', e => this.removeAcao(parseInt(e.target.dataset.id)))
+        );
+    }
+
+    moveAcaoParaPeriodo(acaoId, periodoDestino) {
+        const periodos = this.acoesPorPeriodo[this.tipoVisualizacao];
+        Object.keys(periodos).forEach(p =>
+            periodos[p] = periodos[p].filter(id => id !== acaoId)
+        );
+
+        if (!periodos[periodoDestino]) periodos[periodoDestino] = [];
+        if (periodos[periodoDestino].length < 4) {
+            periodos[periodoDestino].push(acaoId);
+        } else {
+            alert("Máximo de 4 ações por período.");
+        }
+        this.persist();
+    }
+
+    resetDragState() {
+        document.querySelectorAll('.drop-zone')
+            .forEach(z => z.classList.remove('drag-over', 'limite-atingido'));
+        if (this.draggedElement) {
+            this.draggedElement.classList.remove('dragging');
+            this.draggedElement = null;
+        }
+    }
+
+    /* =========================
+       🔹 Utilitários
+    ========================== */
+    getPeriodos() {
+        return this.tipoVisualizacao === 'semestre'
+            ? [
                 { id: '2026/1', nome: '2026/1 - Jan a Jun', classe: 'atual' },
                 { id: '2026/2', nome: '2026/2 - Jul a Dez', classe: 'proximo' },
                 { id: '2027/1', nome: '2027/1 - Consolidação', classe: 'futuro' }
-            ];
-        } else {
-            periodos = [
+            ]
+            : [
                 { id: '2026/1T', nome: '2026/1T - Jan a Mar', classe: 'atual' },
                 { id: '2026/2T', nome: '2026/2T - Abr a Jun', classe: 'atual' },
                 { id: '2026/3T', nome: '2026/3T - Jul a Set', classe: 'proximo' },
@@ -212,375 +312,85 @@ class PDI {
                 { id: '2027/1T', nome: '2027/1T - Jan a Mar', classe: 'futuro' },
                 { id: '2027/2T', nome: '2027/2T - Abr a Jun', classe: 'futuro' }
             ];
-        }
-
-        periodos.forEach(periodo => {
-            const periodoDiv = document.createElement('div');
-            periodoDiv.className = `periodo ${periodo.classe}`;
-            periodoDiv.dataset.periodo = periodo.id;
-
-            const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][periodo.id] || [];
-            const countCards = acoesDoPeriodo.length;
-
-            periodoDiv.innerHTML = `
-                <h4>
-                    ${periodo.nome}
-                    <span class="contador-cards">(${countCards}/4)</span>
-                </h4>
-                <div class="drop-zone" data-periodo="${periodo.id}">
-                    ${this.renderizarAcoes(acoesDoPeriodo)}
-                </div>
-            `;
-
-            timeline.appendChild(periodoDiv);
-        });
-        
-        // Configurar eventos de drag and drop para as novas zonas
-        this.configurarDragAndDrop();
-    }
-    
-    renderizarAcoes(idsAcoes) {
-        return idsAcoes.map(id => {
-            const acao = this.acoes.find(a => a.id === id);
-            if (!acao) return '';
-
-            const prioridadeClass = `prioridade-${acao.prioridade === 'meta' ? 'meta-principal' : acao.prioridade}`;
-            const prioridadeText = acao.prioridade === 'meta' ? 'Meta Principal' : 
-                                 acao.prioridade === 'alta' ? 'Alta Prioridade' :
-                                 acao.prioridade === 'media' ? 'Média Prioridade' : 'Baixa Prioridade';
-
-            return `
-                <div class="acao ${acao.categoria}" draggable="true" data-id="${acao.id}">
-                    <h5>${acao.titulo}</h5>
-                    <p>${acao.descricao}</p>
-                    <div class="acao-controles">
-                        <div class="tag ${prioridadeClass}">${prioridadeText}</div>
-                        <select class="select-prioridade" data-id="${acao.id}">
-                            <option value="alta" ${acao.prioridade === 'alta' ? 'selected' : ''}>Alta</option>
-                            <option value="media" ${acao.prioridade === 'media' ? 'selected' : ''}>Média</option>
-                            <option value="baixa" ${acao.prioridade === 'baixa' ? 'selected' : ''}>Baixa</option>
-                            <option value="meta" ${acao.prioridade === 'meta' ? 'selected' : ''}>Meta</option>
-                        </select>
-                        <button class="btn-delete-acao" data-id="${acao.id}">×</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
     }
 
-    // Render dinâmico das métricas com add/remove por categoria
-    renderizrarMetricas() {
-        const container = document.querySelector('.metricas');
-        if (!container) return;
-
-        // Agrupar métricas por tipo
-        const tipos = [
-            { tipo: 'tecnico', titulo: '📚 Conhecimento Técnico' },
-            { tipo: 'produto', titulo: '🎯 Conhecimento de Produto' },
-            { tipo: 'lideranca', titulo: '👑 Liderança' },
-            { tipo: 'certificacao', titulo: '🏆 Certificações' }
-        ];
-
-        // Reconstruir seção inteira para garantir sincronia
-        container.innerHTML = `
-            <h3>📊 Métricas de Acompanhamento</h3>
-            ${tipos.map(({ tipo, titulo }) => {
-            const metricasTipo = this.metricas.filter(m => m.tipo === tipo);
-            const itens = metricasTipo.map(m => `
-                    <p>
-                        • ${m.text}
-                        <button class="btn-delete-metrica" data-id="${m.id}" title="Remover">×</button>
-                    </p>
-                `).join('') || `<p>• Nenhuma métrica adicionada ainda</p>`;
-
-            return `
-                    <div class="metrica-item">
-                        <h5>
-                            ${titulo}
-                            <button class="btn-add-metrica" data-tipo="${tipo}" title="Adicionar">+</button>
-                        </h5>
-                        ${itens}
-                    </div>
-                `;
-        }).join('')}
-        `;
-
-        // Add: evento para adicionar métrica
-        container.querySelectorAll('.btn-add-metrica').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const tipo = e.currentTarget.dataset.tipo;
-                const texto = prompt('Digite a nova métrica:');
-                if (texto && texto.trim()) {
-                    this.metricas.push({ id: Date.now(), tipo, text: texto.trim() });
-                    this.renderizrarMetricas();
-                }
-            });
-        });
-
-        // Add: evento para remover métrica
-        container.querySelectorAll('.btn-delete-metrica').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = parseInt(e.currentTarget.dataset.id, 10);
-                this.removerMetrica(id);
-            });
-        });
+    showModal(id) {
+        document.getElementById(id).style.display = 'block';
+    }
+    hideModal(id) {
+        document.getElementById(id).style.display = 'none';
+        document.querySelectorAll(`#${id} input, #${id} textarea`)
+            .forEach(el => el.value = '');
     }
 
-
-    configurarDragAndDrop() {
-        // Configurar eventos para ações
-        document.querySelectorAll('.acao').forEach(acao => {
-            acao.addEventListener('dragstart', (e) => {
-                this.draggedElement = acao;
-                acao.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', acao.dataset.id);
-            });
-        });
-        
-        // Configurar eventos para zonas de drop
-        document.querySelectorAll('.drop-zone').forEach(zona => {
-            zona.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                
-                // Contar cards no período
-                const periodo = zona.dataset.periodo;
-                const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][periodo] || [];
-                
-                if (acoesDoPeriodo.length >= 4 && !acoesDoPeriodo.includes(parseInt(this.draggedElement?.dataset.id))) {
-                    zona.classList.add('limite-atingido');
-                } else {
-                    zona.classList.add('drag-over');
-                }
-            });
-            
-            zona.addEventListener('dragleave', () => {
-                zona.classList.remove('drag-over', 'limite-atingido');
-            });
-            
-            zona.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zona.classList.remove('drag-over', 'limite-atingido');
-                
-                if (!this.draggedElement) return;
-
-                const acaoId = parseInt(this.draggedElement.dataset.id);
-                const periodoDestino = zona.dataset.periodo;
-                
-                // Verificar limite de 4 cards
-                const acoesDoPeriodo = this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino] || [];
-                if (acoesDoPeriodo.length >= 4 && !acoesDoPeriodo.includes(acaoId)) {
-                    alert('Máximo de 4 cards por período!');
-                    this.draggedElement.classList.remove('dragging');
-                    this.draggedElement = null;
-                    return;
-                }
-
-                // Remover ação do período origem
-                Object.keys(this.acoesPorPeriodo[this.tipoVisualizacao]).forEach(periodo => {
-                    const index = this.acoesPorPeriodo[this.tipoVisualizacao][periodo].indexOf(acaoId);
-                    if (index > -1) {
-                        this.acoesPorPeriodo[this.tipoVisualizacao][periodo].splice(index, 1);
-                    }
-                });
-
-                // Adicionar ação ao período destino
-                if (!this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino]) {
-                    this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino] = [];
-                }
-                this.acoesPorPeriodo[this.tipoVisualizacao][periodoDestino].push(acaoId);
-
-                this.draggedElement.classList.remove('dragging');
-                this.draggedElement = null;
-
-                // Atualizar visualização
-                this.gerarPeriodos();
-            });
-        });
-        
-        // Configurar eventos para alterar prioridade
-        document.querySelectorAll('.select-prioridade').forEach(select => {
-            select.addEventListener('change', (e) => {
-                const acaoId = parseInt(e.target.dataset.id);
-                const novaPrioridade = e.target.value;
-                this.alterarPrioridade(acaoId, novaPrioridade);
-            });
-        });
-        
-        // Configurar eventos para remover ações
-        document.querySelectorAll('.btn-delete-acao').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const acaoId = parseInt(e.target.dataset.id);
-                this.removerAcao(acaoId);
-            });
-        });
-    }
-    
-    alterarPrioridade(acaoId, novaPrioridade) {
-        const acao = this.acoes.find(a => a.id === acaoId);
-        if (acao) {
-            acao.prioridade = novaPrioridade;
-            this.gerarPeriodos();
-        }
-    }
-    
-    removerAcao(acaoId) {
-        if (confirm('Tem certeza que deseja remover esta ação?')) {
-            // Remover da lista de ações
-            const index = this.acoes.findIndex(a => a.id === acaoId);
-            if (index > -1) {
-                this.acoes.splice(index, 1);
-            }
-
-            // Remover de todos os períodos
-            Object.keys(this.acoesPorPeriodo).forEach(tipo => {
-                Object.keys(this.acoesPorPeriodo[tipo]).forEach(periodo => {
-                    const acaoIndex = this.acoesPorPeriodo[tipo][periodo].indexOf(acaoId);
-                    if (acaoIndex > -1) {
-                        this.acoesPorPeriodo[tipo][periodo].splice(acaoIndex, 1);
-                    }
-                });
-            });
-
-            this.gerarPeriodos();
-        }
-    }
-    // Remover métrica por id
-    removerMetrica(id) {
-        if (!confirm('Tem certeza que deseja remover esta métrica?')) return;
-        const idx = this.metricas.findIndex(m => m.id === id);
-        if (idx > -1) {
-            this.metricas.splice(idx, 1);
-            this.renderizrarMetricas();
-        }
-    }
-
-
-    abrirModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
-    }
-    
-    fecharModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-        // Limpar formulário
-        if (modalId === 'modalPontoForte') {
-            document.getElementById('tituloPF').value = '';
-            document.getElementById('descricaoPF').value = '';
-        } else if (modalId === 'modalAcao') {
-            document.getElementById('tituloAcao').value = '';
-            document.getElementById('descricaoAcao').value = '';
-            document.getElementById('categoriaAcao').value = 'tecnico';
-            document.getElementById('prioridadeAcao').value = 'alta';
-        }
-    }
-    
-    adicionarPontoForte() {
-        const titulo = document.getElementById('tituloPF').value.trim();
-        const descricao = document.getElementById('descricaoPF').value.trim();
-
-        if (!titulo || !descricao) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-
-        this.pontosFortes.push({
-            titulo: `💪 ${titulo}`,
-            descricao: descricao
-        });
-        
-        this.renderizarPontosFortes();
-        this.fecharModal('modalPontoForte');
-    }
-    
-    adicionarAcao() {
-        const titulo = document.getElementById('tituloAcao').value.trim();
-        const descricao = document.getElementById('descricaoAcao').value.trim();
-        const categoria = document.getElementById('categoriaAcao').value;
-        const prioridade = document.getElementById('prioridadeAcao').value;
-
-        if (!titulo || !descricao) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-
-        const novaAcao = {
-            id: this.proximoId++,
-            titulo: titulo,
-            descricao: descricao,
-            categoria: categoria,
-            prioridade: prioridade
-        };
-
-        this.acoes.push(novaAcao);
-        
-        // Adicionar ao primeiro período disponível com espaço
-        let adicionado = false;
-        Object.keys(this.acoesPorPeriodo[this.tipoVisualizacao]).forEach(periodo => {
-            if (!adicionado && this.acoesPorPeriodo[this.tipoVisualizacao][periodo].length < 4) {
-                this.acoesPorPeriodo[this.tipoVisualizacao][periodo].push(novaAcao.id);
-                adicionado = true;
-            }
-        });
-
-        if (!adicionado) {
-            alert('Todos os períodos estão cheios (máximo 4 cards por período).');
-            this.acoes.pop(); // Remove a ação que acabou de ser adicionada
-            return;
-        }
-
-        this.gerarPeriodos();
-        this.fecharModal('modalAcao');
-    }
-    
-    removerPontoForte(index) {
-        if (confirm('Tem certeza que deseja remover este ponto forte?')) {
-            this.pontosFortes.splice(index, 1);
-            this.renderizarPontosFortes();
-        }
-    }
-    
-    // Funções para salvar e carregar do banco de dados
-    salvarPDI() {
-        const dadosPDI = {
+    /* =========================
+       🔹 Persistência
+    ========================== */
+    saveToStorage() {
+        localStorage.setItem('pdiData', JSON.stringify({
             pontosFortes: this.pontosFortes,
             acoes: this.acoes,
             acoesPorPeriodo: this.acoesPorPeriodo,
             tipoVisualizacao: this.tipoVisualizacao,
-            proximoId: this.proximoId
-        };
-        
-        // Aqui você implementaria a lógica para salvar no banco de dados
-        // Por enquanto, vamos salvar no localStorage para demonstração
-        localStorage.setItem('pdiData', JSON.stringify(dadosPDI));
-        alert('PDI salvo com sucesso!');
+            proximoId: this.proximoId,
+            metricas: this.metricas
+        }));
     }
-    
-    carregarPDI() {
-        // Aqui você implementaria a lógica para carregar do banco de dados
-        // Por enquanto, vamos carregar do localStorage para demonstração
-        const dadosSalvos = localStorage.getItem('pdiData');
-        
-        if (dadosSalvos) {
-            const dadosPDI = JSON.parse(dadosSalvos);
-            
-            this.pontosFortes = dadosPDI.pontosFortes;
-            this.acoes = dadosPDI.acoes;
-            this.acoesPorPeriodo = dadosPDI.acoesPorPeriodo;
-            this.tipoVisualizacao = dadosPDI.tipoVisualizacao;
-            this.proximoId = dadosPDI.proximoId;
-            
-            // Atualizar a visualização
-            document.getElementById('tipoVisualizacao').value = this.tipoVisualizacao;
-            this.renderizarPontosFortes();
-            this.gerarPeriodos();
-            
-            alert('PDI carregado com sucesso!');
-        } else {
-            alert('Nenhum PDI salvo encontrado.');
-        }
+
+    loadFromStorage() {
+        const data = localStorage.getItem('pdiData');
+        if (!data) return this.initData();
+        Object.assign(this, JSON.parse(data));
+    }
+
+    initData() {
+        this.pontosFortes = [
+            { titulo: "🗣️ Comunicação", descricao: "Boa articulação e alinhamento entre equipes" },
+            { titulo: "⚡ Tomada de Decisões", descricao: "Capacidade analítica e ágil em decisões" }
+        ];
+        this.acoes = [];
+        this.acoesPorPeriodo = { semestre: { '2026/1': [], '2026/2': [], '2027/1': [] }, trimestre: { '2026/1T': [], '2026/2T': [], '2026/3T': [], '2026/4T': [], '2027/1T': [], '2027/2T': [] } };
+        this.metricas = [
+            { titulo: "📚 Conhecimento Técnico", descricao: "• 2 cursos backend por semestre\n• 1 artigo técnico trimestral" }
+        ];
+    }
+
+    persist() {
+        this.saveToStorage();
+        this.render();
+    }
+
+    /* =========================
+       🔹 Exportar/Importar
+    ========================== */
+    exportJSON() {
+        const data = localStorage.getItem('pdiData');
+        if (!data) return alert("Nenhum dado para exportar.");
+        const blob = new Blob([data], { type: "application/json" });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "pdi.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                localStorage.setItem('pdiData', e.target.result);
+                this.loadFromStorage();
+                this.render();
+                alert("PDI importado com sucesso!");
+            } catch {
+                alert("Arquivo inválido.");
+            }
+        };
+        reader.readAsText(file);
     }
 }
 
-// Inicializar a aplicação quando o documento estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
-    window.pdiApp = new PDI();
-});
+/* Inicialização */
+document.addEventListener('DOMContentLoaded', () => new PDIApp());

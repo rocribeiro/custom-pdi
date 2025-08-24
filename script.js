@@ -51,6 +51,26 @@ class PDI {
             }
         ];
 
+        // Ajuste: métricas categorizadas e com IDs
+        this.metricas = [
+            { id: 101, tipo: 'tecnico', text: "Concluir 2 cursos avançados de backend por semestre" },
+            { id: 102, tipo: 'tecnico', text: "Contribuir com 1 artigo técnico trimestral" },
+            { id: 103, tipo: 'tecnico', text: "Apresentar 1 tech talk por semestre" },
+
+            { id: 201, tipo: 'produto', text: "Participar de 100% das demos de produto" },
+            { id: 202, tipo: 'produto', text: "Criar 2 análises de impacto técnico-produto por mês" },
+            { id: 203, tipo: 'produto', text: "Mapear 3 principais métricas de cada squad" },
+
+            { id: 301, tipo: 'lideranca', text: "Feedback positivo de mentorados (>4.0/5.0)" },
+            { id: 302, tipo: 'lideranca', text: "Liderar 2 projetos cross-funcionais" },
+            { id: 303, tipo: 'lideranca', text: "Obter feedback 360° trimestral" },
+
+            { id: 401, tipo: 'certificacao', text: "AWS Solutions Architect até Dezembro/2026" },
+            { id: 402, tipo: 'certificacao', text: "Avaliar necessidade de certificações adicionais" },
+            { id: 403, tipo: 'certificacao', text: "Manter conhecimentos atualizados" }
+        ];
+
+
         // Mapeamento das ações por período
         this.acoesPorPeriodo = {
             'semestre': {
@@ -90,7 +110,9 @@ class PDI {
     init() {
         this.setupEventListeners();
         this.renderizarPontosFortes();
+        this.renderizrarMetricas();
         this.gerarPeriodos();
+
     }
     
     setupEventListeners() {
@@ -245,7 +267,66 @@ class PDI {
             `;
         }).join('');
     }
-    
+
+    // Render dinâmico das métricas com add/remove por categoria
+    renderizrarMetricas() {
+        const container = document.querySelector('.metricas');
+        if (!container) return;
+
+        // Agrupar métricas por tipo
+        const tipos = [
+            { tipo: 'tecnico', titulo: '📚 Conhecimento Técnico' },
+            { tipo: 'produto', titulo: '🎯 Conhecimento de Produto' },
+            { tipo: 'lideranca', titulo: '👑 Liderança' },
+            { tipo: 'certificacao', titulo: '🏆 Certificações' }
+        ];
+
+        // Reconstruir seção inteira para garantir sincronia
+        container.innerHTML = `
+            <h3>📊 Métricas de Acompanhamento</h3>
+            ${tipos.map(({ tipo, titulo }) => {
+            const metricasTipo = this.metricas.filter(m => m.tipo === tipo);
+            const itens = metricasTipo.map(m => `
+                    <p>
+                        • ${m.text}
+                        <button class="btn-delete-metrica" data-id="${m.id}" title="Remover">×</button>
+                    </p>
+                `).join('') || `<p>• Nenhuma métrica adicionada ainda</p>`;
+
+            return `
+                    <div class="metrica-item">
+                        <h5>
+                            ${titulo}
+                            <button class="btn-add-metrica" data-tipo="${tipo}" title="Adicionar">+</button>
+                        </h5>
+                        ${itens}
+                    </div>
+                `;
+        }).join('')}
+        `;
+
+        // Add: evento para adicionar métrica
+        container.querySelectorAll('.btn-add-metrica').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tipo = e.currentTarget.dataset.tipo;
+                const texto = prompt('Digite a nova métrica:');
+                if (texto && texto.trim()) {
+                    this.metricas.push({ id: Date.now(), tipo, text: texto.trim() });
+                    this.renderizrarMetricas();
+                }
+            });
+        });
+
+        // Add: evento para remover métrica
+        container.querySelectorAll('.btn-delete-metrica').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = parseInt(e.currentTarget.dataset.id, 10);
+                this.removerMetrica(id);
+            });
+        });
+    }
+
+
     configurarDragAndDrop() {
         // Configurar eventos para ações
         document.querySelectorAll('.acao').forEach(acao => {
@@ -363,7 +444,17 @@ class PDI {
             this.gerarPeriodos();
         }
     }
-    
+    // Remover métrica por id
+    removerMetrica(id) {
+        if (!confirm('Tem certeza que deseja remover esta métrica?')) return;
+        const idx = this.metricas.findIndex(m => m.id === id);
+        if (idx > -1) {
+            this.metricas.splice(idx, 1);
+            this.renderizrarMetricas();
+        }
+    }
+
+
     abrirModal(modalId) {
         document.getElementById(modalId).style.display = 'block';
     }

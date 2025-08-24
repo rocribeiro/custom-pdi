@@ -8,73 +8,66 @@
 </head>
 <body>
 <div class="container">
-    <div class="header">
+    <header class="header">
         <h1>PDI - Plano de Desenvolvimento Individual</h1>
         <p>Jornada para Coordenação Técnica</p>
-    </div>
+    </header>
 
-    <div class="objetivo-principal">
+    <section class="objetivo-principal">
         <h2>🎯 Objetivo Principal</h2>
         <p><strong>Iniciar entrevistas para posição de Coordenação até Julho de 2026</strong></p>
         <p>Status atual: Promovido em Janeiro/2026 ✅</p>
-    </div>
+    </section>
 
-    <div class="controles">
-        <div class="controle-grupo">
+    <section class="controles">
+        <div class="controle-grupo custom-select-wrapper">
             <label for="tipoVisualizacao">Visualização:</label>
             <select id="tipoVisualizacao">
                 <option value="semestre">Por Semestre</option>
                 <option value="trimestre">Por Trimestre</option>
             </select>
         </div>
-        <button class="btn btn-add" id="btnAddPontoForte">Adicionar Ponto Forte</button>
-        <button class="btn btn-add" id="btnAddAcao">Adicionar Ação</button>
-        <button class="btn" id="btnExportarPDI">⬇️ Exportar JSON</button>
-        <input type="file" id="inputImportarPDI" accept=".json" style="display:none;" />
-        <button class="btn" id="btnImportarPDI">⬆️ Importar JSON</button>
-    </div>
+        <button class="btn btn-add" id="btnAddPontoForte">💪 Adicionar Ponto Forte</button>
+        <button class="btn btn-add" id="btnAddAcao">⚡ Adicionar Ação</button>
+        <button class="btn btn-add" id="btnAddMetrica">📊 Adicionar Métrica</button>
+        <button class="btn" id="btnSalvarPDI">💾 Salvar PDI</button>
+        <button class="btn" id="btnCarregarPDI">📂 Carregar PDI</button>
+    </section>
 
-    <div class="secao">
-        <h3>💪 Pontos Fortes Atuais</h3>
-        <div class="pontos-fortes" id="pontosFortes"></div>
-    </div>
+    <main class="main-content">
+        <section class="secao">
+            <h3>💪 Pontos Fortes Atuais</h3>
+            <div class="pontos-fortes" id="pontosFortesContainer">
+            </div>
+        </section>
 
-    <div class="secao">
-        <h3>📚 Áreas de Desenvolvimento</h3>
-        <div class="legenda">
-            <div class="legenda-item">
-                <div class="legenda-cor" style="background: #3498db;"></div>
-                <span>Técnico</span>
+        <section class="secao">
+            <h3>📚 Áreas de Desenvolvimento (Categorias das Ações)</h3>
+            <div class="legenda">
+                <div class="legenda-item"><div class="legenda-cor" style="background: var(--cat-tecnico);"></div><span>Técnico</span></div>
+                <div class="legenda-item"><div class="legenda-cor" style="background: var(--cat-produto);"></div><span>Produto</span></div>
+                <div class="legenda-item"><div class="legenda-cor" style="background: var(--cat-lideranca);"></div><span>Liderança</span></div>
+                <div class="legenda-item"><div class="legenda-cor" style="background: var(--cat-certificacao);"></div><span>Certificação</span></div>
             </div>
-            <div class="legenda-item">
-                <div class="legenda-cor" style="background: #9b59b6;"></div>
-                <span>Produto</span>
-            </div>
-            <div class="legenda-item">
-                <div class="legenda-cor" style="background: #e74c3c;"></div>
-                <span>Liderança</span>
-            </div>
-            <div class="legenda-item">
-                <div class="legenda-cor" style="background: #f39c12;"></div>
-                <span>Certificação</span>
-            </div>
-        </div>
-    </div>
+        </section>
 
-    <div class="secao">
-        <h3>🗓️ Cronograma de Desenvolvimento</h3>
-        <div class="timeline" id="timeline"></div>
-    </div>
+        <section class="secao">
+            <h3>🗓️ Cronograma de Desenvolvimento</h3>
+            <div class="timeline" id="timeline">
+            </div>
+        </section>
 
-    <div class="metricas" id="metricasContainer">
-        <!-- renderizadas pelo JS -->
-    </div>
+        <section class="secao metricas">
+            <h3>📊 Métricas de Acompanhamento</h3>
+            <div id="metricasContainer">
+            </div>
+        </section>
+    </main>
 </div>
 
-<!-- Modal Ponto Forte -->
 <div id="modalPontoForte" class="modal">
     <div class="modal-content">
-        <h3>Adicionar Ponto Forte</h3>
+        <h3 class="modal-header">Adicionar Novo Ponto Forte</h3>
         <div class="form-group">
             <label for="tituloPF">Título:</label>
             <input type="text" id="tituloPF" placeholder="Ex: Liderança Técnica">
@@ -90,10 +83,9 @@
     </div>
 </div>
 
-<!-- Modal Ação -->
 <div id="modalAcao" class="modal">
     <div class="modal-content">
-        <h3>Adicionar Ação</h3>
+        <h3 class="modal-header">Adicionar Nova Ação</h3>
         <div class="form-group">
             <label for="tituloAcao">Título:</label>
             <input type="text" id="tituloAcao" placeholder="Ex: Estudar Microserviços">
@@ -123,6 +115,24 @@
         <div class="modal-buttons">
             <button class="btn btn-cancel" id="cancelAcao">Cancelar</button>
             <button class="btn" id="addAcao">Adicionar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalMetrica" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-header">Adicionar Nova Métrica</h3>
+        <div class="form-group">
+            <label for="tituloMetrica">Título da Métrica:</label>
+            <input type="text" id="tituloMetrica" placeholder="Ex: 👑 Liderança">
+        </div>
+        <div class="form-group">
+            <label for="descricaoMetrica">Itens de Acompanhamento:</label>
+            <textarea id="descricaoMetrica" placeholder="• Item 1&#10;• Item 2&#10;• Item 3"></textarea>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn btn-cancel" id="cancelMetrica">Cancelar</button>
+            <button class="btn" id="addMetrica">Adicionar</button>
         </div>
     </div>
 </div>

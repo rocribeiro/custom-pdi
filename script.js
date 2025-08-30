@@ -25,15 +25,11 @@ class PDI {
     renderizarTudo() { this.aplicarConfiguracoes(); this.renderizarComponentesEstaticos(); this.renderizarTimeline(); }
 
     dadosIniciais() {
-        this.proximoId = 100;
-        const anoAtual = new Date().getFullYear();
-        this.acoes = [
-            { id: 1, titulo: "Fazer um MBA", descricao: "Pesquisar e iniciar um MBA.", categoria: "lideranca", dataInicio: `${anoAtual-1}-08`, dataFim: `${anoAtual}-11` },
-            { id: 2, titulo: "Virar Tech Lead", descricao: "Desenvolver competências.", categoria: "lideranca", dataInicio: `${anoAtual}-01`, dataFim: `${anoAtual+1}-06` },
-        ];
-        this.pontosFortes = [{ titulo: "🗣️ Comunicação", descricao: "Articulação e alinhamento." }];
+        this.proximoId = 1; // Começa em 1 para um JSON mais limpo
+        this.acoes = [];
+        this.pontosFortes = [];
         this.pontosDeMelhoria = [];
-        this.metricas = [{ titulo: '📚 Conhecimento Técnico', descricao: '• Concluir 2 cursos por semestre' }];
+        this.metricas = [];
         this.config = {
             anosVisiveis: 3,
             cores: { tecnico: PALETA_DE_CORES[7], produto: PALETA_DE_CORES[8], lideranca: PALETA_DE_CORES[0], certificacao: PALETA_DE_CORES[1] }
@@ -131,9 +127,13 @@ class PDI {
         const data = { titulo: document.getElementById('tituloItem').value.trim(), descricao: document.getElementById('descricaoItem').value.trim() };
         if (!data.titulo) return alert("O campo Título é obrigatório.");
 
-        if (index === null) { // Adicionando
-            const tipoSelecionado = document.querySelector('input[name="tipoPonto"]:checked')?.value;
-            tipo = tipoSelecionado || tipo; // Usa o tipo do rádio, ou o tipo original se o rádio estiver oculto
+        if (index === null) { // Adicionando um novo item
+            // O seletor de tipo (rádio) só é exibido quando o modal é aberto para 'pontosFortes'.
+            // Nesse caso, precisamos ler o valor selecionado para saber se é um Ponto Forte ou de Melhoria.
+            if (this.itemEmEdicao.tipo === 'pontosFortes') {
+                const tipoSelecionado = document.querySelector('input[name="tipoPonto"]:checked')?.value;
+                tipo = tipoSelecionado; // Sobrescreve o 'tipo' com a escolha do usuário
+            }
         }
 
         if (index !== null) { this[tipo][index] = data; }

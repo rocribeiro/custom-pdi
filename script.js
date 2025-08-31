@@ -11,6 +11,7 @@ class PDI {
         this.itemEmEdicao = null;
         this.acaoEmEdicaoId = null;
         this.categoriaEmEdicao = null;
+        this.autosaveEnabled = true;
         this.acoes = [];
         this.pontosFortes = [];
         this.pontosDeMelhoria = [];
@@ -21,11 +22,19 @@ class PDI {
         this.setupEventListeners();
     }
 
-    init() { this.renderizarTudo(); }
-    renderizarTudo() { this.aplicarConfiguracoes(); this.renderizarComponentesEstaticos(); this.renderizarTimeline(); }
+    init() {
+        this.renderizarTudo();
+        document.getElementById('autosaveToggle').checked = this.autosaveEnabled;
+    }
+    renderizarTudo() {
+        this.aplicarConfiguracoes();
+        this.renderizarComponentesEstaticos();
+        this.renderizarTimeline();
+        this.renderizarObjetivoEProgresso();
+    }
 
     dadosIniciais() {
-        this.proximoId = 1; // Começa em 1 para um JSON mais limpo
+        this.proximoId = 1;
         this.acoes = [];
         this.pontosFortes = [];
         this.pontosDeMelhoria = [];
@@ -41,7 +50,37 @@ class PDI {
     setupEventListeners() {
         document.getElementById('tipoVisualizacao').addEventListener('change', e => { this.tipoVisualizacao = e.target.value; this.renderizarTimeline(); this.autosave(); });
         document.getElementById('selectAnosVisiveis').addEventListener('change', e => { this.config.anosVisiveis = parseInt(e.target.value); this.renderizarTimeline(); this.autosave(); });
-        document.getElementById('btnExportarPDI').addEventListener('click', () => this.exportarPDI());
+
+        // Lógica do novo menu de exportação
+        const btnAbrirExport = document.getElementById('btnAbrirExport');
+        const exportMenu = document.getElementById('exportMenu');
+
+        btnAbrirExport.addEventListener('click', (event) => {
+            event.stopPropagation(); // Impede o clique de fechar o menu imediatamente
+            exportMenu.classList.toggle('show');
+        });
+
+        document.getElementById('btnExportarPDFMenu').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.print();
+            exportMenu.classList.remove('show');
+        });
+
+        document.getElementById('btnExportarPDIMenu').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.exportarPDI();
+            exportMenu.classList.remove('show');
+        });
+
+        // Fecha o menu se o usuário clicar em qualquer outro lugar da tela
+        window.addEventListener('click', (event) => {
+            if (!event.target.matches('#btnAbrirExport')) {
+                if (exportMenu.classList.contains('show')) {
+                    exportMenu.classList.remove('show');
+                }
+            }
+        });
+
         const fileUploader = document.getElementById('fileUploader');
         document.getElementById('btnCarregarPDI').addEventListener('click', () => fileUploader.click());
         fileUploader.addEventListener('change', e => this.carregarArquivo(e));
@@ -54,6 +93,54 @@ class PDI {
             if (e.target.id === 'saveAcaoBtn') this.salvarAcao();
             if (e.target.id === 'saveItemBtn') this.salvarItem();
         });
+
+        document.getElementById('autosaveToggle').addEventListener('change', e => {
+            this.autosaveEnabled = e.target.checked;
+            if (this.autosaveEnabled) {
+                this.autosave();
+                console.log("Auto-save ativado.");
+            } else {
+                console.log("Auto-save desativado.");
+            }
+        });
+    }
+
+    renderizarObjetivoEProgresso() {
+        if (this.acoes.length === 0) {
+            document.querySelector('.progress-fill').style.width = '0%';
+            document.querySelector('.progress-text').textContent = 'Adicione ações para iniciar o acompanhamento.';
+            return;
+        }
+
+        const datasInicio = this.acoes.map(a => new Date(a.dataInicio + '-01T00:00:00'));
+        const datasFim = this.acoes.map(a => {
+            const [ano, mes] = a.dataFim.split('-');
+            return new Date(ano, mes, 0);
+        });
+
+        const dataInicioPDI = new Date(Math.min.apply(null, datasInicio));
+        const dataFimPDI = new Date(Math.max.apply(null, datasFim));
+        const hoje = new Date();
+
+        if (hoje < dataInicioPDI) {
+            document.querySelector('.progress-fill').style.width = '0%';
+            document.querySelector('.progress-text').textContent = 'Jornada planejada para começar.';
+            return;
+        }
+        if (hoje > dataFimPDI) {
+            document.querySelector('.progress-fill').style.width = '100%';
+            document.querySelector('.progress-text').textContent = 'Jornada concluída!';
+            return;
+        }
+
+        const duracaoTotal = dataFimPDI.getTime() - dataInicioPDI.getTime();
+        const tempoPercorrido = hoje.getTime() - dataInicioPDI.getTime();
+
+        let progresso = (tempoPercorrido / duracaoTotal) * 100;
+        progresso = Math.min(100, Math.max(0, progresso));
+
+        document.querySelector('.progress-fill').style.width = `${progresso.toFixed(2)}%`;
+        document.querySelector('.progress-text').textContent = `Progresso: ${progresso.toFixed(0)}% do caminho percorrido`;
     }
 
     renderizarComponentesEstaticos() { this.renderizarPontosFortes(); this.renderizarPontosDeMelhoria(); this.renderizarMetricas(); this.renderizarLegenda(); }
@@ -85,65 +172,16 @@ class PDI {
     abrirModalAcaoParaAdicionar() { this.acaoEmEdicaoId = null; const modal = document.getElementById('modalAcao'); modal.querySelector('#modalAcaoHeader').textContent = 'Adicionar Nova Ação'; modal.querySelector('#tituloAcao').value = ''; modal.querySelector('#descricaoAcao').value = ''; modal.querySelector('#saveAcaoBtn').textContent = 'Adicionar'; this.popularSeletoresDeData(modal, null); this.abrirModal('modalAcao'); }
     abrirModalAcaoParaEdicao(id) { this.acaoEmEdicaoId = id; const acao = this.acoes.find(a => a.id === id); if (!acao) return; const modal = document.getElementById('modalAcao'); modal.querySelector('#modalAcaoHeader').textContent = 'Editar Ação'; modal.querySelector('#tituloAcao').value = acao.titulo; modal.querySelector('#descricaoAcao').value = acao.descricao || ''; modal.querySelector('#categoriaAcao').value = acao.categoria; modal.querySelector('#saveAcaoBtn').textContent = 'Salvar Alterações'; this.popularSeletoresDeData(modal, acao); this.abrirModal('modalAcao'); }
     popularSeletoresDeData(modal, acao, datasPredefinidas = null) { const anoAtual = new Date().getFullYear(); const anoFim = anoAtual + 5; const seletorAnoInicio = modal.querySelector('#anoInicio'); const seletorAnoFim = modal.querySelector('#anoFim'); seletorAnoInicio.innerHTML = ''; seletorAnoFim.innerHTML = ''; for (let i = anoAtual - 2; i <= anoFim; i++) { seletorAnoInicio.innerHTML += `<option value="${i}">${i}</option>`; seletorAnoFim.innerHTML += `<option value="${i}">${i}</option>`; } if (acao) { const [inicioAno, inicioMes] = acao.dataInicio.split('-'); const [fimAno, fimMes] = acao.dataFim.split('-'); modal.querySelector('#mesInicio').value = inicioMes; seletorAnoInicio.value = inicioAno; modal.querySelector('#mesFim').value = fimMes; seletorAnoFim.value = fimAno; } else { const mesAtual = String(new Date().getMonth() + 1).padStart(2, '0'); modal.querySelector('#mesInicio').value = mesAtual; seletorAnoInicio.value = anoAtual; modal.querySelector('#mesFim').value = mesAtual; seletorAnoFim.value = anoAtual; } }
-    salvarAcao() { const data = { titulo: document.getElementById('tituloAcao').value.trim(), descricao: document.getElementById('descricaoAcao').value.trim(), dataInicio: `${document.getElementById('anoInicio').value}-${document.getElementById('mesInicio').value}`, dataFim: `${document.getElementById('anoFim').value}-${document.getElementById('mesFim').value}`, categoria: document.getElementById('categoriaAcao').value, }; if (!data.titulo) return alert("O campo Título é obrigatório."); if (new Date(data.dataFim + '-01') < new Date(data.dataInicio + '-01')) return alert("A data de fim não pode ser anterior à data de início."); if (this.acaoEmEdicaoId) { const index = this.acoes.findIndex(a => a.id === this.acaoEmEdicaoId); if (index !== -1) this.acoes[index] = { ...this.acoes[index], ...data }; } else { this.acoes.push({ id: this.proximoId++, ...data }); } this.renderizarTimeline(); this.fecharModal('modalAcao'); this.autosave(); }
-
-    abrirModalAdicaoItem(tipo) {
-        this.itemEmEdicao = { tipo, index: null };
-        const titulos = { pontosFortes: 'Adicionar Item', metricas: 'Adicionar Métrica' };
-        const modal = document.getElementById('modalItem');
-        modal.querySelector('#modalItemHeader').textContent = titulos[tipo] || 'Adicionar Item';
-        modal.querySelector('#tituloItem').value = '';
-        modal.querySelector('#descricaoItem').value = '';
-        modal.querySelector('#saveItemBtn').textContent = 'Adicionar';
-
-        // Mostra ou oculta o seletor de tipo
-        const tipoPontoWrapper = modal.querySelector('#tipoPontoWrapper');
-        if (tipo === 'pontosFortes') {
-            tipoPontoWrapper.style.display = 'block';
-            modal.querySelector('#tipoPontoForte').checked = true; // Default para Ponto Forte
-        } else {
-            tipoPontoWrapper.style.display = 'none';
-        }
-
-        this.abrirModal('modalItem');
-    }
-    abrirModalEdicaoItem(tipo, index) {
-        this.itemEmEdicao = { tipo, index };
-        const titulos = { pontosFortes: 'Editar Ponto Forte', pontosDeMelhoria: 'Editar Ponto de Melhoria', metricas: 'Editar Métrica' };
-        const array = this[tipo];
-        const item = array[index];
-        const modal = document.getElementById('modalItem');
-
-        modal.querySelector('#tipoPontoWrapper').style.display = 'none'; // Oculta na edição
-        modal.querySelector('#modalItemHeader').textContent = titulos[tipo];
-        modal.querySelector('#tituloItem').value = item.titulo;
-        modal.querySelector('#descricaoItem').value = item.descricao;
-        modal.querySelector('#saveItemBtn').textContent = 'Salvar Alterações';
-        this.abrirModal('modalItem');
-    }
-    salvarItem() {
-        if (!this.itemEmEdicao) return;
-        let { tipo, index } = this.itemEmEdicao;
-        const data = { titulo: document.getElementById('tituloItem').value.trim(), descricao: document.getElementById('descricaoItem').value.trim() };
-        if (!data.titulo) return alert("O campo Título é obrigatório.");
-
-        if (index === null) { // Adicionando um novo item
-            // O seletor de tipo (rádio) só é exibido quando o modal é aberto para 'pontosFortes'.
-            // Nesse caso, precisamos ler o valor selecionado para saber se é um Ponto Forte ou de Melhoria.
-            if (this.itemEmEdicao.tipo === 'pontosFortes') {
-                const tipoSelecionado = document.querySelector('input[name="tipoPonto"]:checked')?.value;
-                tipo = tipoSelecionado; // Sobrescreve o 'tipo' com a escolha do usuário
-            }
-        }
-
-        if (index !== null) { this[tipo][index] = data; }
-        else { this[tipo].push(data); }
-
-        this.renderizarComponentesEstaticos();
-        this.fecharModal('modalItem');
-        this.itemEmEdicao = null;
+    salvarAcao() { const data = { titulo: document.getElementById('tituloAcao').value.trim(), descricao: document.getElementById('descricaoAcao').value.trim(), dataInicio: `${document.getElementById('anoInicio').value}-${document.getElementById('mesInicio').value}`, dataFim: `${document.getElementById('anoFim').value}-${document.getElementById('mesFim').value}`, categoria: document.getElementById('categoriaAcao').value, }; if (!data.titulo) return alert("O campo Título é obrigatório."); if (new Date(data.dataFim + '-01') < new Date(data.dataInicio + '-01')) return alert("A data de fim não pode ser anterior à data de início."); if (this.acaoEmEdicaoId) { const index = this.acoes.findIndex(a => a.id === this.acaoEmEdicaoId); if (index !== -1) this.acoes[index] = { ...this.acoes[index], ...data }; } else { this.acoes.push({ id: this.proximoId++, ...data }); }
+        this.renderizarTimeline();
+        this.renderizarObjetivoEProgresso();
+        this.fecharModal('modalAcao');
         this.autosave();
     }
+
+    abrirModalAdicaoItem(tipo) { this.itemEmEdicao = { tipo, index: null }; const titulos = { pontosFortes: 'Adicionar Item', metricas: 'Adicionar Métrica' }; const modal = document.getElementById('modalItem'); modal.querySelector('#modalItemHeader').textContent = titulos[tipo] || 'Adicionar Item'; modal.querySelector('#tituloItem').value = ''; modal.querySelector('#descricaoItem').value = ''; modal.querySelector('#saveItemBtn').textContent = 'Adicionar'; const tipoPontoWrapper = modal.querySelector('#tipoPontoWrapper'); if (tipo === 'pontosFortes') { tipoPontoWrapper.style.display = 'block'; modal.querySelector('#tipoPontoForte').checked = true; } else { tipoPontoWrapper.style.display = 'none'; } this.abrirModal('modalItem'); }
+    abrirModalEdicaoItem(tipo, index) { this.itemEmEdicao = { tipo, index }; const titulos = { pontosFortes: 'Editar Ponto Forte', pontosDeMelhoria: 'Editar Ponto de Melhoria', metricas: 'Editar Métrica' }; const array = this[tipo]; const item = array[index]; const modal = document.getElementById('modalItem'); modal.querySelector('#tipoPontoWrapper').style.display = 'none'; modal.querySelector('#modalItemHeader').textContent = titulos[tipo]; modal.querySelector('#tituloItem').value = item.titulo; modal.querySelector('#descricaoItem').value = item.descricao; modal.querySelector('#saveItemBtn').textContent = 'Salvar Alterações'; this.abrirModal('modalItem'); }
+    salvarItem() { if (!this.itemEmEdicao) return; let { tipo, index } = this.itemEmEdicao; const data = { titulo: document.getElementById('tituloItem').value.trim(), descricao: document.getElementById('descricaoItem').value.trim() }; if (!data.titulo) return alert("O campo Título é obrigatório."); if (index === null) { if (this.itemEmEdicao.tipo === 'pontosFortes') { const tipoSelecionado = document.querySelector('input[name="tipoPonto"]:checked')?.value; tipo = tipoSelecionado; } } if (index !== null) { this[tipo][index] = data; } else { this[tipo].push(data); } this.renderizarComponentesEstaticos(); this.fecharModal('modalItem'); this.itemEmEdicao = null; this.autosave(); }
 
     abrirModalExclusaoItem(tipo, idOuIndex, titulo) { this.itemParaExcluir = { tipo, id: idOuIndex }; document.getElementById('nomeItemExcluir').textContent = titulo; this.abrirModal('modalConfirmarExclusaoItem'); }
     confirmarExclusaoItem() { if (!this.itemParaExcluir) return; const { tipo, id } = this.itemParaExcluir; if (tipo === 'acao') this.acoes = this.acoes.filter(a => a.id !== id); else { this[tipo].splice(id, 1); } this.itemParaExcluir = null; this.renderizarTudo(); this.fecharModal('modalConfirmarExclusaoItem'); this.autosave(); }
@@ -154,10 +192,14 @@ class PDI {
     renderizarPontosDeMelhoria() { const container = document.getElementById('pontosMelhoriaContainer'); const secao = document.getElementById('secaoPontosMelhoria'); const grid = document.querySelector('.secao-grid'); if (!container || !secao || !grid) return; if (this.pontosDeMelhoria.length === 0) { secao.style.display = 'none'; grid.classList.add('full-width'); } else { secao.style.display = 'block'; grid.classList.remove('full-width'); container.innerHTML = this.pontosDeMelhoria.map((item, index) => `<div class="ponto-melhoria card-editavel" data-index="${index}"><h4>${item.titulo}</h4><p>${item.descricao}</p><button class="btn-delete" data-index="${index}">×</button></div>`).join(''); container.querySelectorAll('.btn-delete').forEach((btn, index) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.abrirModalExclusaoItem('pontosDeMelhoria', index, this.pontosDeMelhoria[index].titulo); })); container.querySelectorAll('.card-editavel').forEach((card, index) => card.addEventListener('click', () => this.abrirModalEdicaoItem('pontosDeMelhoria', index))); } }
     renderizarMetricas() { const container = document.getElementById('metricasContainer'); if (!container) return; this.adicionarBotaoContextual('#secaoMetricas', () => this.abrirModalAdicaoItem('metricas')); container.innerHTML = this.metricas.map((item, index) => `<div class="metrica-item card-editavel" data-index="${index}"><h5>${item.titulo}</h5><p style="white-space: pre-wrap;">${item.descricao}</p><button class="btn-delete" data-index="${index}">×</button></div>`).join(''); container.querySelectorAll('.btn-delete').forEach((btn, index) => btn.addEventListener('click', (e) => { e.stopPropagation(); this.abrirModalExclusaoItem('metricas', index, this.metricas[index].titulo); })); container.querySelectorAll('.card-editavel').forEach((card, index) => card.addEventListener('click', () => this.abrirModalEdicaoItem('metricas', index))); }
 
-    autosave() { const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId }; localStorage.setItem('pdiDataGantt', JSON.stringify(dados)); }
-    exportarPDI() { const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId }; const jsonString = JSON.stringify(dados, null, 2); const blob = new Blob([jsonString], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'meu-pdi.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+    autosave() {
+        if (!this.autosaveEnabled) return;
+        const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId, autosaveEnabled: this.autosaveEnabled };
+        localStorage.setItem('pdiDataGantt', JSON.stringify(dados));
+    }
+    exportarPDI() { const dados = { config: this.config, acoes: this.acoes, pontosFortes: this.pontosFortes, pontosDeMelhoria: this.pontosDeMelhoria, metricas: this.metricas, proximoId: this.proximoId, autosaveEnabled: this.autosaveEnabled }; const jsonString = JSON.stringify(dados, null, 2); const blob = new Blob([jsonString], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'meu-pdi.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
     carregarArquivo(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => { try { const dados = JSON.parse(e.target.result); this.aplicarDadosCarregados(dados); alert('PDI carregado com sucesso!'); } catch (error) { console.error("Erro ao carregar o arquivo JSON:", error); alert('Erro: O arquivo selecionado não é um JSON válido.'); } }; reader.readAsText(file); event.target.value = null; }
-    aplicarDadosCarregados(dados) { if (!dados.pontosDeMelhoria) dados.pontosDeMelhoria = []; Object.assign(this, dados); if (!this.config) { const temp = {}; this.dadosIniciais.apply(temp); this.config = temp.config; } this.renderizarTudo(); this.autosave(); }
+    aplicarDadosCarregados(dados) { if (!dados.pontosDeMelhoria) dados.pontosDeMelhoria = []; Object.assign(this, dados); if (!this.config) { const temp = {}; this.dadosIniciais.apply(temp); this.config = temp.config; } if (typeof this.autosaveEnabled !== 'boolean') { this.autosaveEnabled = true; } this.renderizarTudo(); this.autosave(); }
     carregarPDI(silencioso = false) { const dadosSalvos = localStorage.getItem('pdiDataGantt'); if (dadosSalvos) { this.aplicarDadosCarregados(JSON.parse(dadosSalvos)); if (!silencioso) alert('PDI carregado do backup local.'); } else { this.dadosIniciais(); } }
 }
 

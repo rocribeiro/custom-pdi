@@ -9,14 +9,31 @@
 <body>
 <div class="container">
     <header class="header">
-        <h1>PDI - Plano de Desenvolvimento Individual</h1>
-        <p>Jornada para Coordenação Técnica</p>
+        <div class="header-content">
+            <h1>PDI - Plano de Desenvolvimento Individual</h1>
+            <p class="header-subtitle">Construa sua jornada profissional de forma estruturada</p>
+        </div>
     </header>
 
-    <section class="objetivo-principal">
-        <h2>🎯 Objetivo Principal</h2>
-        <p><strong>Iniciar entrevistas para posição de Coordenação até Julho de 2026</strong></p>
-    </section>
+    <div class="objetivo-card">
+        <div class="card-header">
+            <div class="objetivo-icon">🎯</div>
+            <div>
+                <h2 class="objetivo-title">Objetivo Principal</h2>
+                <p class="objetivo-content">Define o foco principal do seu desenvolvimento</p>
+            </div>
+        </div>
+        <div class="objetivo-meta">
+            Iniciar entrevistas para posição de Coordenação até Julho de 2026
+        </div>
+
+        <div class="progress-indicator">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <p class="progress-text">Calculando progresso...</p>
+        </div>
+    </div>
 
     <section class="controles">
         <div class="controle-grupo custom-select-wrapper">
@@ -36,8 +53,24 @@
                 <option value="5">5 Anos</option>
             </select>
         </div>
-        <button class="btn btn-export" id="btnExportarPDI">📤 Exportar JSON</button>
+
+        <div class="dropdown-container">
+            <button class="btn" id="btnAbrirExport">📤 Exportar</button>
+            <div id="exportMenu" class="dropdown-menu">
+                <a href="#" id="btnExportarPDFMenu">📄 PDF</a>
+                <a href="#" id="btnExportarPDIMenu">📤 JSON</a>
+            </div>
+        </div>
+
         <button class="btn" id="btnCarregarPDI">📂 Carregar JSON</button>
+
+        <div class="controle-grupo" style="margin-left: auto;">
+            <label for="autosaveToggle" class="autosave-label">Auto-save:</label>
+            <label class="switch">
+                <input type="checkbox" id="autosaveToggle" checked>
+                <span class="slider round"></span>
+            </label>
+        </div>
     </section>
 
     <main class="main-content">

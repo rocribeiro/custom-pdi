@@ -4,7 +4,7 @@
     --primary-color: #2c3e50;
     --accent-color: #3498db;
     --accent-gradient: linear-gradient(135deg, #3498db, #2980b9);
-    --text-light: #ecf0f1;
+    --text-light: #ffffff;
     --text-dark: #34495e;
     --text-muted: #7f8c8d;
     --border-color: #e5e7eb;
@@ -15,32 +15,173 @@
     --cat-lideranca: #e74c3c;
     --cat-certificacao: #f39c12;
     --prio-alta: #e74c3c;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --spacing-sm: 1rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --radius-xl: 24px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); color: var(--text-dark); min-height: 100vh; padding: 2rem; }
 .container { max-width: 1600px; margin: 0 auto; background: var(--bg-container); border-radius: 20px; box-shadow: var(--shadow-md); overflow: hidden; }
-.header { background: var(--primary-color); color: var(--text-light); padding: 2.5rem 2rem; text-align: center; }
-.header h1 { font-size: 2.5em; margin-bottom: 0.5rem; font-weight: 600; }
+
+/* --- HEADER --- */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: var(--text-light);
+    padding: var(--spacing-xl) var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    position: relative;
+    overflow: hidden;
+    margin: 20px;
+}
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.3" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    pointer-events: none;
+}
+.header-content {
+    position: relative;
+    text-align: center;
+}
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: var(--spacing-sm);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.header-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+}
+
+/* --- Card Objetivo e Barra de Progresso --- */
+.objetivo-card {
+    background: var(--bg-container);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 0 2.5rem 2.5rem 2.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+.objetivo-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.objetivo-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--accent-gradient);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+.objetivo-title { font-size: 1.5rem; font-weight: 600; color: var(--primary-color); margin: 0; }
+.objetivo-content { font-size: 1rem; color: var(--text-muted); margin: 0; }
+.objetivo-meta {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.1em;
+    display: inline-block;
+    margin-top: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.progress-indicator { margin-top: 1.5rem; }
+.progress-bar {
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.progress-fill {
+    height: 100%;
+    background: var(--accent-gradient);
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
+}
+.progress-text {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-align: right;
+    font-weight: 500;
+}
+
 .secao { padding: 1.5rem 2.5rem; }
 .secao h3 { color: var(--primary-color); font-size: 1.6em; margin-bottom: 1.5rem; border-bottom: 3px solid var(--accent-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
-
-/* --- SEÇÃO OBJETIVO PRINCIPAL (CORRIGIDO) --- */
-.objetivo-principal { background: var(--accent-gradient); color: white; padding: 1.5rem; margin: 2.5rem; border-radius: 15px; box-shadow: var(--shadow-sm); text-align: center; position: relative; }
-#objetivo-container h2 { font-size: 1.8em; margin-bottom: 0.75rem; }
-#objetivo-actions { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; }
-.btn-objetivo-action { background: rgba(255,255,255,0.2); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; transition: all 0.2s ease; }
-.btn-objetivo-action:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
-#objetivo-content p { font-size: 1.1em; margin: 0.25rem 0; }
-#objetivo-content input { width: 100%; background: rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.5); border-radius: 8px; padding: 8px 12px; color: white; font-size: 1.1em; margin: 0.25rem 0; text-align: center; }
-#objetivo-content input::placeholder { color: rgba(255,255,255,0.7); }
 
 .controles { display: flex; gap: 1rem; padding: 1rem 2.5rem; flex-wrap: wrap; align-items: center; background-color: #f8f9fa; border-bottom: 1px solid var(--border-color); }
 .controle-grupo { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; }
 .btn { background: var(--accent-gradient); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-size: 14px; transition: all 0.3s ease; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
 .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); }
-.btn-export { background: linear-gradient(135deg, #8e44ad, #9b59b6); }
 .btn-delete { background: var(--prio-alta); }
+
+/* --- Dropdown de Exportação --- */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 140px;
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    bottom: 110%;
+    right: 0;
+}
+.dropdown-menu a {
+    color: var(--text-dark) !important;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+}
+.dropdown-menu a:hover {
+    background-color: #f1f1f1;
+}
+.dropdown-menu.show {
+    display: block;
+}
+
+
+/* --- Estilos do Switch de Auto-Save --- */
+.autosave-label { font-weight: 500; color: var(--text-dark); }
+.switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--danger-color); transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: var(--success-color); }
+input:checked + .slider:before { transform: translateX(26px); }
+.slider.round { border-radius: 34px; }
+.slider.round:before { border-radius: 50%; }
+.slider::after {
+    position: absolute; content: 'OFF'; color: white; display: block;
+    top: 50%; transform: translateY(-50%); right: 8px; font-size: 10px; font-weight: bold;
+}
+input:checked + .slider::after { content: 'ON'; left: 10px; }
+
+/* ... (O resto do seu CSS permanece o mesmo) ... */
 .custom-select-wrapper { position: relative; }
 .custom-select-wrapper select { display: none; }
 .select-selected { background-color: #fff; color: var(--text-dark); padding: 8px 15px; border: 2px solid var(--border-color); border-radius: 25px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: space-between; }
@@ -128,5 +269,71 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
     body { padding: 1rem; }
     .secao { padding: 1.5rem; }
     .controles { flex-direction: column; align-items: stretch; }
+    .header { margin: 10px; }
     .header h1 { font-size: 2em; }
+}
+
+/* --- ESTILOS DE IMPRESSÃO (PDF) --- */
+@media print {
+    /* Esconde elementos não essenciais */
+    .controles,
+    .header-subtitle,
+    .btn-add-contextual,
+    .btn-delete,
+    .btn-delete-acao,
+    #modal-container,
+    #colorPalettePopup,
+    #fileUploader,
+    .legenda-cor,
+    .custom-select-wrapper::after,
+    .select-selected::after {
+        display: none !important;
+    }
+    /* Estilos gerais para o corpo do PDF */
+    body {
+        padding: 0;
+        background-color: #fff;
+        font-size: 10pt;
+    }
+    /* Ajusta o container principal */
+    .container {
+        max-width: 100% !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
+    /* Remove sombras e ajusta fundos */
+    .header, .objetivo-card, .ponto-forte, .ponto-melhoria, .acao, .metrica-item {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+    }
+    .header {
+        margin: 0;
+        border-radius: 0 !important;
+        background: #f1f1f1 !important;
+        color: #000 !important;
+    }
+    .header h1 {
+        text-shadow: none;
+        font-size: 18pt;
+    }
+    /* Garante que os cards não quebrem no meio da página */
+    .secao, .objetivo-card, .ponto-forte, .ponto-melhoria, .metrica-item, .acao {
+        page-break-inside: avoid;
+    }
+    /* Melhora o layout do grid para uma única coluna */
+    .secao-grid {
+        grid-template-columns: 1fr;
+    }
+    /* Ajusta a timeline para impressão */
+    .timeline-container {
+        overflow-x: visible;
+    }
+    .timeline-body, .timeline-header {
+        min-width: unset !important;
+    }
+    /* Garante que cores de texto sejam pretas para melhor leitura */
+    * {
+        color: #000 !important;
+    }
 }
